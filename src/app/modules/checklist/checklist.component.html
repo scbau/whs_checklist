@@ -1,0 +1,146 @@
+
+<div style="padding: 20px;" fxLayout="column" fxFlexLayout="center space-around">
+  <mat-form-field>
+    <mat-label>State</mat-label>
+    <mat-select (selectionChange)="filterState($event)" [(ngModel)]="selectedState">
+      <mat-option value="All" selected>
+        All States
+      </mat-option>
+      <mat-option value="NSW">
+        NSW
+      </mat-option>
+      <mat-option value="QLD">
+        QLD
+      </mat-option>
+      <mat-option value="VIC">
+        VIC
+      </mat-option>
+      <mat-option value="WA">
+        WA
+      </mat-option>
+      <mat-option value="STAU">
+        STAU
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Period</mat-label>
+    <mat-select (selectionChange)="filter($event)" [(ngModel)]="selectedOption">
+      <mat-option value="7" selected>
+        7 days
+      </mat-option>
+      <mat-option value="14">
+        14 days
+      </mat-option>
+      <mat-option value="30">
+        30 days
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- <mat-form-field>
+    <mat-label>Period</mat-label>
+    <mat-select (selectionChange)="filter($event)" [(ngModel)]="selectedOption">
+      <mat-option *ngFor="let week of weeks" [value]="week[0]">
+        {{week[0]}} to {{week[1]}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field> -->
+
+  <h2>Forklift Checklist Compliance</h2>
+  <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+
+    <ng-container matColumnDef="location">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Location </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.location}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="forklift">
+      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef> Forklift No. </th>
+      <td style="width: 25%!important;" mat-cell *matCellDef="let element"> {{element.forklift}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesChecked">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times Checked </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesChecked}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesCompliant">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times Compliant </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesCompliant}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="compliance">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Compliance </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.compliance}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesCritical">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times with Critical </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesCritical}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <mat-paginator #paginator1 class="mat-elevation-z8" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+</div>
+
+
+
+<div style="padding: 20px;" fxLayout="column" fxFlexLayout="center space-around">
+  <mat-form-field>
+    <mat-label>Period</mat-label>
+    <mat-select (selectionChange)="filterVSR($event)" [(ngModel)]="selectedOptionVSR">
+    <!-- <mat-select [formControl]="selectedRange" (selectionChange)="filter($event)" [(ngModel)]="selectedOption"> -->
+      <mat-option value="7" selected>
+        7 days
+      </mat-option>
+      <mat-option value="14">
+        14 days
+      </mat-option>
+      <mat-option value="30">
+        30 days
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <h2>VSR Vehicle Checklist Compliance</h2>
+  <table mat-table [dataSource]="dataSource2" class="mat-elevation-z8">
+
+    <ng-container matColumnDef="location">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Location </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.location}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="forklift">
+      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef> VSR Vechicle </th>
+      <td style="width: 25%!important;" mat-cell *matCellDef="let element"> {{element.forklift}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesChecked">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times Checked </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesChecked}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesCompliant">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times Compliant </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesCompliant}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="compliance">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Compliance </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.compliance}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="timesCritical">
+      <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef> Times with Critical </th>
+      <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.timesCritical}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <mat-paginator #paginator2 class="mat-elevation-z8" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+</div>

@@ -1,0 +1,68 @@
+<!-- <mat-progress-bar mode="indeterminate" *ngIf="isLoading" color="accent"></mat-progress-bar>
+<div style="padding: 10px;" fxLayout="row" fxLayoutAlign="space-around stretch">
+  <div style="width: 100%;">
+    <input  (change)="fileChange($event)"  type="file"  class="custom-file-input"  id="inputGroupFile01"  aria-describedby="inputGroupFileAddon01">
+    <span  class="input-group-text upload"  (click)="upload()"  id="btnUpload">Upload</span>
+  </div>
+</div> -->
+
+<input
+  type="file"
+  #file
+  style="display: none"
+  (change)="onFilesAdded()"
+  multiple
+/>
+<div class="container" style="width: 70%; margin: auto; padding: 20px;" fxLayout="column" fxLayoutAlign="space-evenly stretch">
+  <h2 mat-dialog-title>Upload Trip Plans</h2>
+  <div>
+    <button
+      [disabled]="uploading || uploadSuccessful"
+      mat-raised-button
+      color="primary"
+      class="add-files-btn"
+      (click)="addFiles()"
+    >
+      Add Files
+    </button>
+  </div>
+
+  <!-- This is the content of the dialog, containing a list of the files to upload -->
+  <div fxFlex style="max-height: 500px; overflow: auto;">
+    <mat-list>
+      <mat-list-item *ngFor="let file of files">
+        <h4 mat-line>{{file.name}}</h4>
+        <mat-progress-bar
+          style="margin-right: 16px;"
+          *ngIf="progress"
+          mode="determinate"
+          [value]="progress[file.name].progress | async"
+        ></mat-progress-bar>
+        <!-- <mat-form-field ngForm>
+          <mat-label>Sloc</mat-label>
+          <mat-select [formControl]="slocs" [disabled]="!canRemoveFile">
+            <mat-option *ngFor="let sloc of slocList" [value]="sloc">{{sloc}}</mat-option>
+          </mat-select>
+        </mat-form-field> -->
+        <button mat-icon-button *ngIf="!uploadSuccessful" (click)="removeItem(file)" [disabled]="!canRemoveFile" aria-label="Remove file from queue">
+          <mat-icon>close</mat-icon>
+        </button>
+        <mat-icon *ngIf="uploadSuccessful" style="color: green;">check</mat-icon>
+        <!-- <mat-icon matListIcon>close</mat-icon> -->
+      </mat-list-item>
+    </mat-list>
+  </div>
+
+  <!-- This are the actions of the dialog, containing the primary and the cancel button-->
+  <div fxLayout="row" fxLayoutAlign="end stretch" class="actions" style="padding-top: 10px;">
+    <button *ngIf="showCancelButton" mat-button mat-dialog-close>Cancel</button>
+    <button
+      mat-raised-button
+      color="primary"
+      [disabled]="!canBeClosed"
+      (click)="closeDialog()"
+    >
+      {{primaryButtonText}}
+    </button>
+  </div>
+</div>
