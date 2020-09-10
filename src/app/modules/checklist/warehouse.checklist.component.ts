@@ -84,7 +84,35 @@ const DAILY = (function() {
     dateView: monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU")
   });
 
+
   startDate = new Date(Date.now());
+  startDate.setHours(0, 0, 0, 0);
+  var startMoment = moment(startDate);
+  startMoment.add(-7, 'days');
+  startMoment.add(-1 * (startDate.getDay() - 1), 'days');
+
+  var endMoment = moment(startMoment);
+  endMoment.add(4, 'days');
+
+
+
+
+  // startDate.setDate(startDate.getDate() - 7);
+  // first = startDate.getDate() - startDate.getDay() + 1
+  // last = first + 4;
+  // var mondayMoment = moment(startDate);
+  // monday = new Date(startDate.setDate(first));
+  // friday = new Date(startDate.setDate(last));
+  // var fridayMoment = moment(startDate);
+
+  options.push({
+    value: startMoment.toISOString(),
+    end: endMoment.toISOString(),
+    displayValue: "Last week (" + startMoment.format("DD/MM/YYYY") + " to " + endMoment.format("DD/MM/YYYY") + ")",
+    dateView: startMoment.format("DD/MM/YYYY") + " to " + endMoment.format("DD/MM/YYYY")
+  });
+
+  /*startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   startDate.setDate(startDate.getDate() - 7);
   first = startDate.getDate() - startDate.getDay() + 1
@@ -97,7 +125,7 @@ const DAILY = (function() {
     end: friday.toISOString(),
     displayValue: "Last week (" + monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU") + ")",
     dateView: monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU")
-  });
+  });*/
 
   startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
