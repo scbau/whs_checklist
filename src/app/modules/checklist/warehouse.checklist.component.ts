@@ -683,7 +683,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
 
       var date = new Date(item.date);
 
-      var col = [[`Checklist (${date.toLocaleDateString()})`, "Pass / Fail / N/A", "Action Needed"]]
+      var col = [[`Checklist (${date.toLocaleDateString("en-AU")})`, "Pass / Fail / N/A", "Action Needed"]]
       var rows = [];
 
       for (var i = 0; i < item.answers.length; i++) {
