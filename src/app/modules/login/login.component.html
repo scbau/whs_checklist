@@ -46,7 +46,7 @@
                         <mat-label>Enter your password</mat-label>
                         <input matInput formControlName="password" [type]="hide ? 'password' : 'text'">
                         <!-- <mat-icon matPrefix>vpn_key</mat-icon> -->
-                        <button tabindex="-1" mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                        <button type="button" tabindex="-1" mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
                             <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
                         </button>
 

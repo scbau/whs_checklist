@@ -142,7 +142,7 @@
   </div>
 
   <div style="width: 100%; padding: 10px;">
-    <h2>{{ selectedChecklist.displayValue }} Warehouse Depot Checklist Compliance ({{ getDateView() }})</h2>
+    <h2>{{ selectedChecklist.displayValue }} Warehouse Depot Checklist Compliance ({{ dateView }})</h2>
     <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
     <mat-progress-bar mode="indeterminate" color="accent" *ngIf="isLoading"></mat-progress-bar>
     <table style="width: 100%;" mat-table matSort matSortActive="compliance" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
@@ -187,10 +187,19 @@
         <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.timesCritical}} </td>
       </ng-container>
 
-      <!-- <ng-container matColumnDef="items">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> items </th>
-        <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> <a href="" *ngIf="element.items.length>0">link here</a> </td>
-      </ng-container> -->
+      <ng-container matColumnDef="items">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Data </th>
+        <!-- <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> <a href="{{generateData()}}" *ngIf="element.items.length>0">link here</a> </td> -->
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+          <button 
+            mat-icon-button 
+            color="primary" 
+            (click)="generateData(element)">
+            <!-- View -->
+            <mat-icon>get_app</mat-icon>
+          </button>
+        </td>
+      </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>

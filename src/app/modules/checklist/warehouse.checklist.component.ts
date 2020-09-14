@@ -1,5 +1,9 @@
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+// import 'jspdf-autotable';
+
 
 import { Router, NavigationEnd } from '@angular/router';
 
@@ -31,7 +35,8 @@ export interface ChecklistData {
   address: string;
   frequencyCompliance: number;
   expectedCheckCount: number;
-  items: [string]
+  items: [string];
+  data: [object];
 }
 
 export interface PeriodData {
@@ -313,6 +318,8 @@ const CHECKLIST_OPTIONS = [
 })
 export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDestroy, OnDestroy {
 
+  dateView = "";
+
   range = new FormGroup({
     start: new FormControl(new Date()),
     end: new FormControl(new Date())
@@ -336,7 +343,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
   matcher = new MyErrorStateMatcher();
   matcherDaily = new MyErrorStateMatcher();
 
-  displayedColumns: string[] = ['state', 'warehouse', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical'/*, 'items'*/];
+  displayedColumns: string[] = ['state', 'warehouse', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', 'items'];
   displayedOptionColumns: string[] = ['period', 'close'];
   dataSource = new MatTableDataSource<ChecklistData>([]);
 
@@ -393,6 +400,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
     }
 
     this.fetchData();
+    this.dateView = this.getDateView();
   }
 
   ngOnDestroy() {
@@ -497,6 +505,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.pageSizeOptions[3] = this.currentElementData.length;
+    this.dateView = this.getDateView();
     setTimeout(() => {
       this.isLoading = false;
     }, 1000);
@@ -576,12 +585,13 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
               timesCritical: 0
             }
           }
-          // row["items"] = item.items;
+          row["items"] = item.items;
           row["expectedCheckCount"] = item.expectedCheckCount;
           row["frequencyCompliance"] = row["timesChecked"] / item.expectedCheckCount;
           row["warehouse"] = item.site;
           row["state"] = item.state;
           row["address"] = item.address;
+          row["data"] = item.data;
 
           result.push(row);
         }
@@ -651,5 +661,62 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
 
     this.updateOptionSource(tempArray);
     this.fetchData();
+  }
+
+
+  generateData(entry) {
+    console.log(entry);
+
+    var doc = new jsPDF('portrait', 'pt', 'a4');
+    var warehouse = [];
+    warehouse.push(["Site:", entry.warehouse]);
+    warehouse.push(["Address:", entry.address]);
+    warehouse.push(["Dates:", this.dateView]);
+    warehouse.push(["Expected Check Count:", entry.expectedCheckCount]);
+    warehouse.push(["Times Checked: ", entry.timesChecked]);
+
+    autoTable(doc, { head: [], body: warehouse });
+
+    for (var item of entry.data) {
+      // var details = [];
+      // details.push(["Date:", item.date]);
+
+      var date = new Date(item.date);
+
+      var col = [[`Checklist (${date.toLocaleDateString()})`, "Pass / Fail / N/A", "Action Needed"]]
+      var rows = [];
+
+      for (var i = 0; i < item.answers.length; i++) {
+        var temp = [item.questionDetails[i], item.answers[i], item.comments[i]];
+        rows.push(temp);
+      }
+
+      autoTable(doc, { 
+        head: col, 
+        body: rows,
+        didDrawPage: (data) => {
+          // console.log(data);
+        }
+      });
+
+      var extra = [];
+      var otherComment = ""
+
+      if (item.otherComment) {
+        otherComment = item.otherComment;
+      }
+      extra.push(["Other Comments:", otherComment])
+      extra.push(["Employee:", item.employee])
+      
+      autoTable(doc, {
+        margin: { bottom: 10 },
+        head: [],
+        body: extra
+      });
+    }
+
+    var shortAddress = entry.address.split(',')[0];
+
+    doc.save(`${entry.warehouse}-${entry.address.split(',')[0]} (${this.dateView})`);
   }
 }
