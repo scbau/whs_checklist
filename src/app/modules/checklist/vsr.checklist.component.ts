@@ -74,6 +74,7 @@ const DAILY = (function() {
 
   var friday = new Date(startDate.valueOf());
   friday.setDate(friday.getDate() + 4);
+  friday.setHours(23, 59, 59, 999);
   // var friday = new Date(startDate.setDate(first + 4));
   
   options.push({

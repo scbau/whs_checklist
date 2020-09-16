@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import { Router, NavigationEnd } from '@angular/router';
 
@@ -30,6 +32,8 @@ export interface ChecklistData {
   forklift: string;
   frequencyCompliance: number;
   expectedCheckCount: number;
+  items: [string];
+  data: [object];
 }
 
 const DAILY = (function() {
@@ -67,6 +71,7 @@ const DAILY = (function() {
 
   var friday = new Date(startDate.valueOf());
   friday.setDate(friday.getDate() + 4);
+  friday.setHours(23, 59, 59, 999);
   // var friday = new Date(startDate.setDate(first + 4));
 
   options.push({
@@ -179,6 +184,8 @@ const DAILY = (function() {
 })
 export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
 
+  dateView = "";
+
   range = new FormGroup({
     start: new FormControl(new Date()),
     end: new FormControl(new Date())
@@ -202,7 +209,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
   periods = DAILY;
 
   // displayedColumns: string[] = ['location', 'forklift', 'timesChecked', 'timesCompliant', 'compliance', 'timesCritical'];
-  displayedColumns: string[] = ['state', 'forkliftName', 'branch', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical'];
+  displayedColumns: string[] = ['state', 'forkliftName', 'branch', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', "items"];
 
   dataSource = new MatTableDataSource<ChecklistData>([]);
   // dataSource2 = new MatTableDataSource<ChecklistData>(ELEMENT_DATA_VSR);
@@ -255,6 +262,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
       }
     }
     this.fetchData();
+    this.dateView = this.getDateView();
   }
 
   ngOnDestroy() {
@@ -446,6 +454,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.pageSizeOptions[3] = this.currentElementData.length;
+    this.dateView = this.getDateView();
     setTimeout(() => {
       this.isLoading = false;
     }, 1000);
@@ -521,12 +530,16 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
             }
           }
 
+          row["items"] = item.items;
           row["expectedCheckCount"] = item.expectedCheckCount;
           row["frequencyCompliance"] = row["timesChecked"] / item.expectedCheckCount;
           row["forkliftName"] = item.forkliftName;
+          row["forkliftType"] = item.forkliftType;
+          row["rego"] = item.rego;
           row["state"] = item.state;
           row["address"] = item.address;
           row["branch"] = item.branch;
+          row["data"] = item.data;
 
           result.push(row);
         }
@@ -537,5 +550,64 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
 
         this.updateDataSource(result);
       });
+  }
+
+
+  generateData(entry) {
+    console.log(entry);
+
+    var doc = new jsPDF('portrait', 'pt', 'a4');
+    var warehouse = [];
+    warehouse.push(["Forklift: ", entry.forkliftName + " (" + entry.forkliftType + ")"]);
+    warehouse.push(["Rego: ", entry.rego]);
+    warehouse.push(["Site:", entry.branch]);
+    warehouse.push(["Address:", entry.address]);
+    warehouse.push(["Dates:", this.dateView]);
+    warehouse.push(["Expected Check Count:", entry.expectedCheckCount]);
+    warehouse.push(["Times Checked: ", entry.timesChecked]);
+
+    autoTable(doc, { head: [], body: warehouse });
+
+    for (var item of entry.data) {
+      // var details = [];
+      // details.push(["Date:", item.date]);
+
+      var date = new Date(item.date);
+
+      var col = [[`Checklist (${date.toLocaleDateString("en-AU")})`, "Pass / Fail / N/A", "Action Needed"]]
+      var rows = [];
+
+      for (var i = 0; i < item.answers.length; i++) {
+        var temp = [item.questionDetails[i], item.answers[i], item.comments[i]];
+        rows.push(temp);
+      }
+
+      autoTable(doc, {
+        head: col,
+        body: rows,
+        didDrawPage: (data) => {
+          // console.log(data);
+        }
+      });
+
+      var extra = [];
+      var otherComment = ""
+
+      if (item.otherComment) {
+        otherComment = item.otherComment;
+      }
+      extra.push(["Other Comments:", otherComment])
+      extra.push(["Employee:", item.employee])
+
+      autoTable(doc, {
+        margin: { bottom: 10 },
+        head: [],
+        body: extra
+      });
+    }
+
+    var shortAddress = entry.address.split(',')[0];
+
+    doc.save(`${entry.branch}-${entry.address.split(',')[0]}-${entry.forkliftName} (${this.dateView})`);
   }
 }
