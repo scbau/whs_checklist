@@ -669,7 +669,12 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
     console.log(entry);
 
     var doc = new jsPDF('portrait', 'pt', 'a4');
+
+    // autoTable(doc, { head: [], body: [] })
+
+
     var warehouse = [];
+    warehouse.push(["Checklist:", `${this.selectedChecklist.displayValue} Warehouse Depot Checklist`]);
     warehouse.push(["Site:", entry.warehouse]);
     warehouse.push(["Address:", entry.address]);
     warehouse.push(["Dates:", this.dateView]);
@@ -718,6 +723,6 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
 
     var shortAddress = entry.address.split(',')[0];
 
-    doc.save(`${entry.warehouse}-${entry.address.split(',')[0]} (${this.dateView})`);
+    doc.save(`(Whse-${this.selectedChecklist.displayValue[0]}) ${entry.warehouse}-${entry.address.split(',')[0]} (${this.dateView})`);
   }
 }

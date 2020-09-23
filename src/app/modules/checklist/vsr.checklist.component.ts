@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import { Router, NavigationEnd } from '@angular/router';
 
@@ -32,6 +34,8 @@ export interface ChecklistData {
   address: string;
   frequencyCompliance: number;
   expectedCheckCount: number;
+  items: [string];
+  data: [object];
 }
 
 export interface PeriodData {
@@ -228,6 +232,8 @@ const CHECKLIST_OPTIONS = [
 })
 export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
 
+  dateView = "";
+
   range = new FormGroup({
     start: new FormControl(new Date()),
     end: new FormControl(new Date())
@@ -250,7 +256,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
   matcher = new MyErrorStateMatcher();
   matcherDaily = new MyErrorStateMatcher();
 
-  displayedColumns: string[] = ['state', 'vehicle', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical'];
+  displayedColumns: string[] = ['state', 'vehicle', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', 'items'];
   displayedOptionColumns: string[] = ['period', 'close'];
   dataSource = new MatTableDataSource<ChecklistData>([]);
 
@@ -307,6 +313,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     this.fetchData();
+    this.dateView = this.getDateView();
     // this.updateDataSource(this.currentElementData);
   }
 
@@ -411,6 +418,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.pageSizeOptions[3] = this.currentElementData.length;
+    this.dateView = this.getDateView();
     setTimeout(() => {
       this.isLoading = false;
     }, 1000);
@@ -487,11 +495,14 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
               timesCritical: 0
             }
           }
+          row["items"] = item.items;
           row["expectedCheckCount"] = item.expectedCheckCount;
           row["frequencyCompliance"] = row["timesChecked"] / item.expectedCheckCount;
           row["vehicle"] = item.rego;
           row["state"] = item.stateReg;
           row["address"] = item.user;
+          row["data"] = item.data;
+          // row["driver"] = item.driver;
 
           result.push(row);
         }
@@ -560,5 +571,60 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateOptionSource(tempArray);
     this.fetchData();
+  }
+
+  generateData(entry) {
+    console.log(entry);
+
+    var doc = new jsPDF('portrait', 'pt', 'a4');
+    var vsr = [];
+    vsr.push(["Checklist:", `${this.selectedChecklist.displayValue} VSR Pre-start Checklist`]);
+    vsr.push(["SLOC:", entry.vehicle]);
+    vsr.push(["Dates:", this.dateView]);
+    vsr.push(["Expected Check Count:", entry.expectedCheckCount]);
+    vsr.push(["Times Checked: ", entry.timesChecked]);
+
+    autoTable(doc, { head: [], body: vsr });
+
+    for (var item of entry.data) {
+      // var details = [];
+      // details.push(["Date:", item.date]);
+
+      var date = new Date(item.date);
+
+      var col = [[`Checklist (${date.toLocaleDateString("en-AU")})`, "Pass / Fail / N/A", "Action Needed"]]
+      var rows = [];
+
+      for (var i = 0; i < item.answers.length; i++) {
+        var temp = [item.questionDetails[i], item.answers[i], item.comments[i]];
+        rows.push(temp);
+      }
+
+      autoTable(doc, {
+        head: col,
+        body: rows,
+        didDrawPage: (data) => {
+          // console.log(data);
+        }
+      });
+
+      var extra = [];
+      var otherComment = ""
+
+      if (item.otherComment) {
+        otherComment = item.otherComment;
+      }
+      extra.push(["Odometer Reading:", item.odometerReading])
+      extra.push(["Other Comments:", otherComment])
+      extra.push(["Driver:", item.employee])
+
+      autoTable(doc, {
+        margin: { bottom: 10 },
+        head: [],
+        body: extra
+      });
+    }
+
+    doc.save(`(VSR-${this.selectedChecklist.displayValue[0]}) ${entry.vehicle} (${this.dateView})`);
   }
 }

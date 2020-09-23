@@ -608,6 +608,6 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
 
     var shortAddress = entry.address.split(',')[0];
 
-    doc.save(`${entry.branch}-${entry.address.split(',')[0]}-${entry.forkliftName} (${this.dateView})`);
+    doc.save(`(Forklift) ${entry.branch}-${entry.address.split(',')[0]}-${entry.forkliftName} (${this.dateView})`);
   }
 }
