@@ -654,7 +654,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
       delete current.timesCompliant;
       current["Frequency Check Compliance"] = current.frequencyCompliance;
       delete current.frequencyCompliance;
-      current["Vehicle Safety Compliance"] = current.compliance;
+      current["Forklift Safety Compliance"] = current.compliance;
       delete current.compliance;
       current["Times Critical"] = current.timesCritical;
       delete current.timesCritical;

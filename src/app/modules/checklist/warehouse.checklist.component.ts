@@ -764,7 +764,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
       delete current.timesCompliant;
       current["Frequency Check Compliance"] = current.frequencyCompliance;
       delete current.frequencyCompliance;
-      current["Vehicle Safety Compliance"] = current.compliance;
+      current["Warehouse Safety Compliance"] = current.compliance;
       delete current.compliance;
       current["Times Critical"] = current.timesCritical;
       delete current.timesCritical;
