@@ -149,7 +149,8 @@
           mat-raised-button 
           color="primary" 
           style="float: right;"
-          (click)="exportToExcel()">
+          (click)="exportToExcel()"
+          [disabled]="isLoading || isUpdateButtonDisabled()">
           Generate Non-Compliance
         </button>
       </div> 
