@@ -12,8 +12,10 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ErrorStateMatcher } from '@angular/material/core';
 
-import { ChecklistService } from '../../services/checklist/checklist.service';
 import { AuthenticationService } from '../../services/auth/auth.service';
+import { ChecklistService } from '../../services/checklist/checklist.service';
+import { ExcelService } from '../../services/checklist/excel.service';
+
 
 import { FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 
@@ -371,7 +373,7 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
   // paginator size options
   pageSizeOptions = [10, 20, 40, 100];
 
-  constructor(private whService: ChecklistService, private authService: AuthenticationService, private router: Router) {
+  constructor(private excelService: ExcelService, private whService: ChecklistService, private authService: AuthenticationService, private router: Router) {
     this.navigationSubscription = this.router.events.subscribe((e: any) => {
       // If it is a NavigationEnd event re-initalise the component
       if (e instanceof NavigationEnd) {
@@ -724,5 +726,53 @@ export class WarehouseChecklistComponent implements OnInit, AfterViewInit, OnDes
     var shortAddress = entry.address.split(',')[0];
 
     doc.save(`(Whse-${this.selectedChecklist.displayValue[0]}) ${entry.warehouse}-${entry.address.split(',')[0]} (${this.dateView})`);
+  }
+
+  exportToExcel() {
+    console.log(`exporting to excel file`);
+    console.log(this.dataSource.data);
+    var copy = JSON.parse(JSON.stringify(this.dataSource.data));
+    console.log(copy);
+
+    var convertedData = [];
+
+    copy.sort((a, b) => {
+      return b.timesChecked - a.timesChecked;
+    });
+
+    var filteredData = copy.filter((current, index, result) => {
+      // console.log(current);
+      delete current.data;
+      return (current.compliance < 1 || current.frequencyCompliance < 1) && current.vehicle != "TEST";
+    });
+
+    filteredData.forEach((current) => {
+      delete current.data;
+      delete current.items;
+
+      current["State"] = current.state;
+      delete current.state;
+      current["Warehouse"] = current.warehouse;
+      delete current.warehouse;
+      current["Address"] = current.address;
+      delete current.address;
+      current["Expected Check Count"] = current.expectedCheckCount;
+      delete current.expectedCheckCount;
+      current["Times Checked"] = current.timesChecked;
+      delete current.timesChecked;
+      current["Times Compliant"] = current.timesCompliant;
+      delete current.timesCompliant;
+      current["Frequency Check Compliance"] = current.frequencyCompliance;
+      delete current.frequencyCompliance;
+      current["Vehicle Safety Compliance"] = current.compliance;
+      delete current.compliance;
+      current["Times Critical"] = current.timesCritical;
+      delete current.timesCritical;
+
+      // console.log(current);
+      convertedData.push(current);
+    });
+
+    this.excelService.exportAsExcelFile(convertedData, `(${this.selectedChecklist.displayValue}) Warehouse Checklist Non-Compliance`, this.dateView);
   }
 }

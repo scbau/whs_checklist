@@ -1,7 +1,6 @@
 <div style="padding: 10px; height: 100%;" fxLayout="row" fxLayoutAlign="space-around stretch">
   <div fxLayout="column" fxLayoutAlign="start stretch" style="padding: 10px; width: 35%;">
       <h3 *ngIf="currentUserRole != 'state'"><b>Filters</b></h3>
-    <!-- <div> -->
       <mat-form-field *ngIf="currentUserRole != 'state'">
         <mat-label>State</mat-label>
         <mat-select (selectionChange)="filterState($event)" [disabled]="isLoading || currentUserRole == 'state'" [(ngModel)]="selectedState">
@@ -13,28 +12,9 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-    <!-- </div> -->
-
-    <!-- <div fxLayout="column" fxLayoutAlign="space-between stretch"> -->
-      <!-- <mat-form-field>
-        <mat-label>Checklist</mat-label>
-        <mat-select (selectionChange)="filterChecklist($event)" [(ngModel)]="selectedChecklist">
-          <mat-option *ngFor="let checklist of checklists" [value]="checklist">
-            {{checklist.displayValue}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field> -->
-    <!-- </div> -->
+    
     <div fxLayout="column" fxLayoutAlign="space-between stretch">
       <h3><b>Period</b></h3>
-      <!-- <mat-list>
-        <mat-list-item *ngFor="let option of selectedOption; let index=index">
-          <h3 matLine> {{option.displayValue}} </h3>
-          <button mat-icon-button (click)="removeOption(index)" type="button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </mat-list-item>
-      </mat-list> -->
 
       <mat-form-field>
         <mat-label>Date Range</mat-label>
@@ -73,22 +53,27 @@
           >
           Update Table
         </button>
-        <!-- <button 
-          mat-raised-button 
-          color="primary" 
-          style="float: right;"
-          (click)="fetchData()"
-          [disabled]="isLoading || options.value?.length == 0">
-          Update Table
-        </button> -->
       </div>
     </div>
-    
   </div>
 
   <div style="width: 100%; padding: 10px;">
-    <h2>Daily Forklift Pre-start Checklist Compliance ({{ dateView }})</h2>
-    <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
+    <div fxLayout="row" fxLayoutAlign="space-between stretch">
+      <div>
+        <h2 style="margin-bottom: 8px!important;">Daily Forklift Pre-start Checklist Compliance ({{ dateView }})</h2>
+        <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
+      </div>
+      <div style="padding-bottom: 17.5px;" fxLayout="row" fxLayoutAlign="end center">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          style="float: right;"
+          (click)="exportToExcel()"
+          [disabled]="isLoading || isUpdateButtonDisabled()">
+          Generate Non-Compliance
+        </button>
+      </div> 
+    </div>
     <mat-progress-bar mode="indeterminate" color="accent" *ngIf="isLoading"></mat-progress-bar>
     <table style="width: 100%;" mat-table matSort matSortActive="compliance" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
 

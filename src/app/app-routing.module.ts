@@ -6,6 +6,7 @@ import { ChecklistComponent } from './modules/checklist/checklist.component';
 import { ForkliftChecklistComponent } from './modules/checklist/forklift.checklist.component';
 import { VSRChecklistComponent } from './modules/checklist/vsr.checklist.component';
 import { WarehouseChecklistComponent } from './modules/checklist/warehouse.checklist.component';
+import { SummaryComponent } from './modules/formation/summary.component';
 import { LoginComponent } from './modules/login/login.component';
 import { SettingsComponent } from './modules/settings/settings.component';
 // import { UploadComponent } from './modules/settings/upload.component';
@@ -71,6 +72,17 @@ const routes: Routes = [
     data: {
       title: 'Warehouse Depot Checklist',
       expectedRole: ['admin', 'stateAdmin', 'entityAdmin', 'storeAdmin']
+    }
+    // outlet: 'sidebarContent'
+  },
+  {
+    path: 'dashboard/formation/summary',
+    component: SummaryComponent,
+    canActivate: [AuthGuard],
+    runGuardsAndResolvers: 'always',
+    data: {
+      title: 'Formation Checklist Summary',
+      expectedRole: ['admin', 'formation']
     }
     // outlet: 'sidebarContent'
   },

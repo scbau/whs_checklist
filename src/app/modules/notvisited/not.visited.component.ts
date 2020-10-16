@@ -44,6 +44,8 @@ export class NotVisitedComponent implements OnInit {
     this.dataSource2.paginator = this.paginator2;
     this.dataSource3.paginator = this.paginator3;
 
+    this.dataSource3.sort = this.sort;
+
     this.loading = false;
   }
 

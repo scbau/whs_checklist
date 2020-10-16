@@ -2,7 +2,7 @@
   <div fxLayout="column" fxLayoutAlign="start stretch" style="padding: 10px; width: 35%;">
       <h3><b>Filters</b></h3>
     <!-- <div> -->
-      <mat-form-field *ngIf="currentUserRole != 'state'">
+      <!-- <mat-form-field *ngIf="currentUserRole != 'state'">
         <mat-label>State</mat-label>
         <mat-select (selectionChange)="filterState($event)" [disabled]="isLoading || currentUserRole == 'state'" [(ngModel)]="selectedState">
           <mat-option value="" selected>
@@ -12,7 +12,7 @@
             {{state}}
           </mat-option>
         </mat-select>
-      </mat-form-field>
+      </mat-form-field> -->
     <!-- </div> -->
 
     <!-- <div fxLayout="column" fxLayoutAlign="space-between stretch"> -->
@@ -131,82 +131,83 @@
         <tr mat-row *matRowDef="let row; columns: displayedOptionColumns;"></tr>
       </table>
       <mat-paginator *ngIf="selectedChecklist.value == 'monthly'" class="mat-elevation-z8" #paginator2 [pageSizeOptions]="[5, 10, 15]"></mat-paginator>
-
     </div>
     
   </div>
 
   <div style="width: 100%; padding: 10px;">
-    <div fxLayout="row" fxLayoutAlign="space-between stretch">
-      <div>
-        <h2 style="margin-bottom: 8px!important;">{{ selectedChecklist.displayValue }} VSR Pre-start Checklist Compliance ({{ dateView }})</h2>
-        <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
-      </div>
-      <div style="padding-bottom: 17.5px;" fxLayout="row" fxLayoutAlign="end center">
-        <!-- <button mat-button color="primary" [disabled]="isLoading" (click)="resetPeriodFilter()">Reset</button> -->
-
-        <button 
-          mat-raised-button 
-          color="primary" 
-          style="float: right;"
-          (click)="exportToExcel()">
-          Generate Non-Compliance
-        </button>
-      </div> 
-    </div>
+    <h2 style="margin-bottom: 8px!important;">Acid Filler Checklist Summary ({{ dateView }})</h2>
+    <!-- <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p> -->
     <mat-progress-bar mode="indeterminate" color="accent" *ngIf="isLoading"></mat-progress-bar>
-    <table style="width: 100%;" mat-table matSort matSortActive="compliance" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
+    <table style="width: 100%;" mat-table matSort matSortActive="weekNumber" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
 
-      <ng-container matColumnDef="state">
-        <th style="width: 18%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> State </th>
-        <td style="width: 18%!important;" mat-cell *matCellDef="let element"> {{element.state}} </td>
+      <ng-container matColumnDef="weekNumber">
+        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header="weekNumber"> Week Number </th>
+        <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.weekNumber}} </td>
       </ng-container>
 
-      <ng-container matColumnDef="vehicle">
-        <th style="width: 13%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> VSR Vehicle </th>
-        <td style="width: 13%!important;" mat-cell *matCellDef="let element"> {{element.vehicle}} </td>
+      <ng-container matColumnDef="equipmentLocation">
+        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Equipment Location </th>
+        <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.equipmentLocation}} </td>
       </ng-container>
 
-      <ng-container matColumnDef="address">
-        <th style="width: 23%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> User </th>
-        <td style="width: 23%!important;" mat-cell *matCellDef="let element"> {{element.address}} </td>
+      <ng-container matColumnDef="lineNumber">
+        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Line Number </th>
+        <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.lineNumber}} </td>
       </ng-container>
 
-      <ng-container matColumnDef="timesChecked">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Times Checked </th>
-        <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.timesChecked}} </td>
+      <ng-container matColumnDef="mon">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Mon </th>
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+        <!-- <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element">  -->
+          <mat-icon color="primary" *ngIf="element.mon == 'pass'">check_circle</mat-icon> 
+          <mat-icon color="accent" *ngIf="element.mon == 'fail'">cancel</mat-icon>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="frequencyCompliance">
-        <th style="width: 8%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Frequency Compliance </th>
-        <td style="width: 8%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.frequencyCompliance | percent }} </td>
+      <ng-container matColumnDef="tue">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Tue </th>
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+          <mat-icon color="primary" *ngIf="element.tue == 'pass'">check_circle</mat-icon> 
+          <mat-icon color="accent" *ngIf="element.tue == 'fail'">cancel</mat-icon>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="timesCompliant">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Times Compliant </th>
-        <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.timesCompliant}} </td>
+      <ng-container matColumnDef="wed">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Wed </th>
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+          <mat-icon color="primary" *ngIf="element.wed == 'pass'">check_circle</mat-icon> 
+          <mat-icon color="accent" *ngIf="element.wed == 'fail'">cancel</mat-icon>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="compliance">
-        <th style="width: 8%!important;" mat-header-cell *matHeaderCellDef mat-sort-header="compliance"> Checklist Compliance </th>
-        <td style="width: 8%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.compliance | percent }} </td>
+      <ng-container matColumnDef="thu">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Thu </th>
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+          <mat-icon color="primary" *ngIf="element.thu == 'pass'">check_circle</mat-icon> 
+          <mat-icon color="accent" *ngIf="element.thu == 'fail'">cancel</mat-icon>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="timesCritical">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Times with Critical </th>
-        <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> {{element.timesCritical}} </td>
+      <ng-container matColumnDef="fri">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Fri </th>
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+          <mat-icon color="primary" *ngIf="element.fri == 'pass'">check_circle</mat-icon> 
+          <mat-icon color="accent" *ngIf="element.fri == 'fail'">cancel</mat-icon>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="items">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Data </th>
+      <ng-container matColumnDef="details">
+        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Details </th>
         <!-- <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> <a href="{{generateData()}}" *ngIf="element.items.length>0">link here</a> </td> -->
         <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+            <!-- mat-icon-button  -->
           <button 
-            mat-icon-button 
+            mat-button
             color="primary" 
             (click)="generateData(element)">
-            <!-- View -->
-            <mat-icon>get_app</mat-icon>
+            View
+            <!-- <mat-icon>get_app</mat-icon> -->
           </button>
         </td>
       </ng-container>

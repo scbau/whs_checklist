@@ -10,13 +10,13 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ErrorStateMatcher } from '@angular/material/core';
 
-// import { VisitService } from '../../services/visit/visit.service';
-import { AuthenticationService } from '../../services/auth/auth.service';
 import { ChecklistService } from '../../services/checklist/checklist.service';
-import { ExcelService } from '../../services/checklist/excel.service';
+import { AuthenticationService } from '../../services/auth/auth.service';
+// import { UiService } from '../../services/overlay/ui.service'
 
 import { FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 
+/** Error when invalid control is dirty, touched, or submitted. */
 export class MyErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const isSubmitted = form && form.submitted;
@@ -29,13 +29,20 @@ export interface ChecklistData {
   timesCompliant: number;
   compliance: string;
   timesCritical: number;
-  location: string;
-  forklift: string;
+  state: string;
+  vehicle: string;
+  address: string;
   frequencyCompliance: number;
   expectedCheckCount: number;
   items: [string];
   data: [object];
 }
+
+export interface PeriodData {
+  displayValue: string;
+}
+
+const LAST_YEARS = 2;
 
 const DAILY = (function() {
   var startDate = new Date(Date.now());
@@ -63,7 +70,6 @@ const DAILY = (function() {
     dateView: startDate.toLocaleDateString("en-AU")
   });
 
-
   startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   var first = startDate.getDate() - startDate.getDay() + 1
@@ -74,7 +80,7 @@ const DAILY = (function() {
   friday.setDate(friday.getDate() + 4);
   friday.setHours(23, 59, 59, 999);
   // var friday = new Date(startDate.setDate(first + 4));
-
+  
   options.push({
     value: monday.toISOString(),
     end: friday.toISOString(),
@@ -112,22 +118,6 @@ const DAILY = (function() {
   /*startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   startDate.setDate(startDate.getDate() - 7);
-  first = startDate.getDate() - startDate.getDay() + 1
-  last = first + 4;
-  monday = new Date(startDate.setDate(first));
-  friday = new Date(startDate.setDate(last));
-
-  options.push({
-    value: monday.toISOString(),
-    end: friday.toISOString(),
-    displayValue: "Last week (" + monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU") + ")",
-    dateView: monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU")
-  });*/
-
-
-  /*startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - 7);
   endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 7);
   endDate.setMilliseconds(endDate.getMilliseconds() - 1);
@@ -135,7 +125,7 @@ const DAILY = (function() {
   options.push({
     value: startDate.toISOString(),
     end: endDate.toISOString(),
-    displayValue: "Last 7 days"
+    displayValue: "Last 7 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")"
   });*/
 
   startDate = new Date(Date.now());
@@ -173,17 +163,74 @@ const DAILY = (function() {
     dateView: ""
   });
 
-  console.log(options);
   return options;
 })();
+
+const MAINTENANCE = DAILY;
+
+const MONTHLY = (function() {
+  var startYear = new Date(Date.now()).getFullYear();
+
+  var startDate = new Date(startYear - LAST_YEARS, 0, 1);
+  startDate.setHours(0, 0, 0, 0);
+
+  var endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
+
+  var options = [{
+    value: startDate.toISOString(),
+    end: endDate.toISOString(),
+    displayValue: (startDate.getMonth() + 1) + "-" + startDate.getFullYear(),
+    dateView: (startDate.getMonth() + 1) + "-" + startDate.getFullYear()
+  }];
+
+  while (options.length < (12 * (LAST_YEARS + 1))) {
+    startDate.setMonth(startDate.getMonth() + 1);
+    endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1);
+    endDate.setMilliseconds(endDate.getMilliseconds() - 1);
+
+    options.push({
+      value: startDate.toISOString(),
+      end: endDate.toISOString(),
+      displayValue: (startDate.getMonth() + 1) + "-" + startDate.getFullYear(),
+      dateView: (startDate.getMonth() + 1) + "-" + startDate.getFullYear()
+    });
+  }
+
+  console.log("MONTHLY", options);
+  return options;
+})();
+
+const CHECKLIST_OPTIONS = [
+  {
+    value: 'daily',
+    displayValue: 'Daily',
+    periodOptions: DAILY,
+    dateUnit: 1
+  },
+  {
+    value: 'monthly',
+    displayValue: 'Monthly',
+    periodOptions: MONTHLY,
+    dateUnit: 30
+  },
+  /*{
+    value: 'maintenance',
+    displayValue: 'Maintenance',
+    periodOptions: MAINTENANCE,
+    dateUnit: 1
+  }*/
+]
 
 
 @Component({
   selector: 'app-dashboard',
-  templateUrl: './forklift.checklist.component.html',
-  styleUrls: ['./checklist.component.css']
+  templateUrl: './acidfiller.component.html',
+  styleUrls: ['./formation.component.css']
 })
-export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   dateView = "";
 
@@ -198,43 +245,46 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
   currentUserState = 'all';
 
   expectedCheckCount = 0;
-
   isLoading = false;
 
+  options = new FormControl('valid', [
+    Validators.required,
+  ]);
   optionsDaily = new FormControl('valid', [
     Validators.required,
   ]);
-
-  selectedOptionDaily = DAILY[0];
+  matcher = new MyErrorStateMatcher();
   matcherDaily = new MyErrorStateMatcher();
-  periods = DAILY;
 
-  // displayedColumns: string[] = ['location', 'forklift', 'timesChecked', 'timesCompliant', 'compliance', 'timesCritical'];
-  displayedColumns: string[] = ['state', 'forkliftName', 'branch', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', "items"];
-
+  displayedColumns: string[] = ['state', 'vehicle', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', 'items'];
+  displayedOptionColumns: string[] = ['period', 'close'];
   dataSource = new MatTableDataSource<ChecklistData>([]);
-  // dataSource2 = new MatTableDataSource<ChecklistData>(ELEMENT_DATA_VSR);
 
   @ViewChild('paginator') paginator: MatPaginator;
-  // @ViewChild('paginator2') paginator2: MatPaginator;
+  @ViewChild('paginator2') paginator2: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
-  // public selectedOption = '7';
-  // public selectedOptionVSR = '7';
-  // public selectedState = 'All';
-
-  public weeks = [];
-
+  public selectedOption = [CHECKLIST_OPTIONS[0].periodOptions[0]];
+  selectedOptionDaily = DAILY[0];
+  optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
+  // optionSource = new MatTableDataSource<PeriodData>([]);
+  // public selectedPeriod = CHECKLIST_OPTIONS[0].periodOptions[0];
   public selectedState = '';
+  public selectedChecklist = CHECKLIST_OPTIONS[0];
 
+  // data array
   currentElementData = [];
-  // currentElementData = [];
 
-  states = ["NSW", "NZ", "QLD", "SA", "VIC", "WA", "TEST"];
+  // filter options array 
+  states = ["ACT", "NSW", "NZ", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
+  periods = CHECKLIST_OPTIONS[0].periodOptions;
+  checklists = CHECKLIST_OPTIONS;
+
+  // paginator size options
   pageSizeOptions = [10, 20, 40, 100];
 
-  // constructor(private visitService: VisitService) { }
-  constructor(private excelService: ExcelService, private checklistService: ChecklistService, private authService: AuthenticationService, private router: Router) {
+  // constructor(private checklistService: ChecklistService, private ui: UiService) { }
+  constructor(private checklistService: ChecklistService, private authService: AuthenticationService, private router: Router) {
     this.navigationSubscription = this.router.events.subscribe((e: any) => {
       // If it is a NavigationEnd event re-initalise the component
       if (e instanceof NavigationEnd) {
@@ -264,6 +314,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     }
     this.fetchData();
     this.dateView = this.getDateView();
+    // this.updateDataSource(this.currentElementData);
   }
 
   ngOnDestroy() {
@@ -273,11 +324,14 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngAfterViewInit(): void {
+    // console.log("life: AfterViewInit");
     // this.fetchData();
   }
 
   ngOnInit(): void {
+    // console.log("life: OnInit");
     var currentUser = this.authService.currentUserValue;
+    console.log(currentUser);
     if (currentUser) {
       if (currentUser.role == 'admin') {
         this.currentUserRole = 'all';
@@ -297,129 +351,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     // this.updateDataSource(this.currentElementData);
   }
 
-  filterOptionList(data) {
-    /*this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
-    // this.optionSource = new MatTableDataSource<PeriodData>([]);
-    this.optionSource.paginator = this.paginator2;*/
-    console.log(data);
-    console.log(this.selectedState);
-    if (data.value.displayValue == "Today") {
-      console.log(data.value);
-      // this.currentElementData = ELEMENT_DATA;
-      if (this.selectedState != "") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.state == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData);
-      }
-    }
-    else if (data.value.displayValue == "Last 7 days") {
-      console.log(data.value);
-      this.currentElementData = this.currentElementData;
-      if (this.selectedState != "") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.state == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData);
-      }
-    }
-    else if (data.value.displayValue == "Last 14 days") {
-      console.log(data.value);
-      this.currentElementData = this.currentElementData;
-      if (this.selectedState != "") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.state == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData);
-      }
-    }
-  }
-
-  /*ngOnInit(): void {
-    this.dataSource.paginator = this.paginator1;
-    this.dataSource2.paginator = this.paginator2;
-
-    var startDate = moment(new Date(2020, 0, 1));
-
-    if (startDate.date() == 8) {
-      startDate = startDate.isoWeekday(-6);
-    }
-
-    var today = moment(new Date(2020, 11, 31)).isoWeekday('Sunday');
-    while (startDate.isBefore(today)) {
-      let startDateWeek = startDate.isoWeekday('Monday').format('DD-MM-YYYY');
-      let endDateWeek = startDate.isoWeekday('Sunday').add(7, 'days').format('DD-MM-YYYY');
-      startDate.add(7, 'days');
-      this.weeks.push([startDateWeek, endDateWeek]);
-    }
-
-    console.log(this.weeks);
-  }*/
-
-  /*filter(data) {
-    console.log(data);
-    console.log(data.value == 7);
-    console.log(this.selectedState);
-    if (data.value == 7) {
-      console.log(data.value);
-      this.currentElementData = ELEMENT_DATA;
-      if (this.selectedState != "All") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA.filter(item => item.location == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA);
-      }
-    }
-    else if (data.value == 14) {
-      console.log(data.value);
-      this.currentElementData = ELEMENT_DATA2;
-      if (this.selectedState != "All") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA2.filter(item => item.location == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA2);
-      }
-    }
-    else if (data.value == 30) {
-      console.log(data.value);
-      this.currentElementData = ELEMENT_DATA3;
-      if (this.selectedState != "All") {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA3.filter(item => item.location == this.selectedState));
-      }
-      else {
-        this.dataSource = new MatTableDataSource<ChecklistData>(ELEMENT_DATA3);
-      }
-    }
-  }*/
-
-  /*filterState(data) {
-    console.log(data);
-    if (data.value == 'NSW') {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.location == data.value));
-    }
-    else if (data.value == 'STAU') {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.location == data.value));
-    }
-    else if (data.value == 'QLD') {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.location == data.value));
-    }
-    else if (data.value == 'WA') {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.location == data.value));
-    }
-    else if (data.value == 'VIC') {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData.filter(item => item.location == data.value));
-    }
-    else {
-      console.log(data.value);
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData);
-    }
-  }*/
-
+  // filter state
   filterState(data) {
     console.log(data);
     if (!data.value) {
@@ -428,7 +360,6 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
       this.pageSizeOptions[3] = this.currentElementData.length;
-      console.log(this.currentElementData);
     }
     else {
       console.log(`States filter: ${data.value}`);
@@ -440,7 +371,39 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     }
   }
 
+  // filter checklist type (daily, weekly, monthly, biannually)
+  filterChecklist(data) {
+    this.periods = data.value.periodOptions;
+    var tempArray = [];
+
+    if (data.value.value == "daily") { // daily checklist handler
+      this.selectedOptionDaily = data.value.periodOptions[0];
+    }
+    else if (data.value.value == "monthly") { // monthly checklist handler
+      tempArray.push(data.value.periodOptions[(LAST_YEARS * 12) + new Date().getMonth()]);
+    }
+    else if (data.value.value == "maintenance") { // biannually checklist handler
+      this.selectedOptionDaily = data.value.periodOptions[0];
+    }
+    this.updateOptionSource(tempArray);
+    this.fetchData();
+  }
+
+  filterOptionList(data) {
+    this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
+    // this.optionSource = new MatTableDataSource<PeriodData>([]);
+    this.optionSource.paginator = this.paginator2;
+  }
+
+  private updateOptionSource(optionList) {
+    this.selectedOption = optionList;
+    this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
+    // this.optionSource = new MatTableDataSource<PeriodData>([]);
+    this.optionSource.paginator = this.paginator2;
+  }
+
   private updateDataSource(dataList) {
+    console.log(dataList);
     this.currentElementData = dataList;
     this.expectedCheckCount = dataList[0].expectedCheckCount;
     var tempArray = [];
@@ -461,48 +424,44 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     }, 1000);
   }
 
-  isUpdateButtonDisabled() {
-    if (this.selectedOptionDaily.value == 'Custom') {
-      return !this.range.value.start || !this.range.value.end
-    }
-    return false;
+  removeOption(data) {
+    var tempArray = this.selectedOption.filter(function(value, index, arr) {
+      return value.value != data.value;
+    });
+
+    this.updateOptionSource(tempArray);
   }
 
-  getDateView() {
-    if (this.selectedOptionDaily.value == 'Custom') {
-      var start = this.range.value.start ? this.range.value.start.toLocaleDateString() : ""
-      var end = this.range.value.end ? this.range.value.end.toLocaleDateString() : ""
-
-      return start + " - " + end;
-
-      // return this.range.value.start +" to "+ this.range.value.end;
-    }
-    return this.selectedOptionDaily.dateView;
-  }
-
+  // query data
   fetchData() {
-    console.log("!!!!!");
+    console.log("!!!!!")
     // handle what type of checklist is displayed and must update date range default value
     this.isLoading = true;
     var params = [];
-
-    if (this.selectedOptionDaily.value == 'Custom') {
-      var start = new Date(this.range.value.start.toISOString());
-      start.setHours(0, 0, 0, 0);
-      var end = new Date(this.range.value.end.toISOString());
-      end.setHours(23, 59, 59, 999);
-      params.push({
-        from: start.toISOString(),
-        to: end.toISOString()
-      });
+    
+    if (this.selectedChecklist.value == 'monthly') {
+      for (var option of this.selectedOption) {
+        params.push({ from: option.value, to: option.end });
+      }
     }
-    else
-      params.push({ from: this.selectedOptionDaily.value, to: this.selectedOptionDaily.end });
-      // params.push({ from: this.selectedOptionDaily.value, to: this.selectedOptionDaily.end });
+    else {
+      if (this.selectedOptionDaily.value == 'Custom') {
+        var start = new Date(this.range.value.start.toISOString());
+        start.setHours(0, 0, 0, 0);
+        var end = new Date(this.range.value.end.toISOString());
+        end.setHours(23, 59, 59, 999);
+        params.push({
+          from: start.toISOString(),
+          to: end.toISOString()
+        });
+      }
+      else
+        params.push({ from: this.selectedOptionDaily.value, to: this.selectedOptionDaily.end });
+    }
 
-    // console.log(this.selectedChecklist.value);
+    console.log(this.selectedChecklist.value);
 
-    this.checklistService.fetchData('forklift', 'daily', params)
+    this.checklistService.fetchData('vsr', this.selectedChecklist.value, params)
       .subscribe((data: any) => {
         console.log(data);
 
@@ -511,11 +470,17 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
 
         var arrayData = data.data;
         for (var item of arrayData) {
-          if (!states[item.state]) {
-            states[item.state] = 1;
+
+          if (!item.enable) {
+            console.log("skipping");
+            continue;
+          }
+          
+          if (!states[item.stateReg]) {
+            states[item.stateReg] = 1;
           }
           else {
-            states[item.state]++;
+            states[item.stateReg]++;
           }
 
           var row = {};
@@ -530,17 +495,14 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
               timesCritical: 0
             }
           }
-
           row["items"] = item.items;
           row["expectedCheckCount"] = item.expectedCheckCount;
           row["frequencyCompliance"] = row["timesChecked"] / item.expectedCheckCount;
-          row["forkliftName"] = item.forkliftName;
-          row["forkliftType"] = item.forkliftType;
-          row["rego"] = item.rego;
-          row["state"] = item.state;
-          row["address"] = item.address;
-          row["branch"] = item.branch;
+          row["vehicle"] = item.rego;
+          row["state"] = item.stateReg;
+          row["address"] = item.user;
           row["data"] = item.data;
+          // row["driver"] = item.driver;
 
           result.push(row);
         }
@@ -553,25 +515,93 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
       });
   }
 
+  getDateView() {
+    console.log(this.selectedOption);
+    if (this.selectedChecklist.value == 'daily') {
+      if (this.selectedOptionDaily.value == 'Custom') {
+        var start = this.range.value.start ? this.range.value.start.toLocaleDateString() : ""
+        var end = this.range.value.end ? this.range.value.end.toLocaleDateString() : ""
+
+        return start + " - " + end;
+
+        // return this.range.value.start +" to "+ this.range.value.end;
+      }
+      return this.selectedOptionDaily.dateView;
+    }
+    else {
+      if (this.selectedOption.length > 1) {
+        var items = [];
+        for (var option of this.selectedOption) {
+          items.push(option.dateView);
+        }
+
+        // if (item)
+        return items[0] + ` (+${items.length - 1} ${items.length === 2 ? 'other' : 'others'})`;
+      }
+      else
+        return this.selectedOption[0].dateView;
+    }
+  }
+
+  isUpdateButtonDisabled() {
+    if (this.selectedChecklist.value != "daily") {
+      return this.options.value?.length == 0;
+    }
+    else {
+      if (this.selectedOptionDaily.value == 'Custom') {
+        return !this.range.value.start || !this.range.value.end
+      }
+    }
+  }
+
+  resetPeriodFilter() {
+
+    var data = this.selectedChecklist, tempArray = [];
+
+    if (data.value == "daily") { // daily checklist handler
+      this.selectedOptionDaily = DAILY[0];
+    }
+    else if (data.value == "monthly") { // monthly checklist handler
+      tempArray.push(data.periodOptions[(LAST_YEARS * 12) + new Date().getMonth()]);
+    }
+    else if (data.value == "maintenance") { // biannually checklist handler
+      // tempArray.push(data.periodOptions[data.periodOptions.length - 1]);
+      this.selectedOptionDaily = MAINTENANCE[0];
+    }
+
+    this.updateOptionSource(tempArray);
+    this.fetchData();
+  }
 
   generateData(entry) {
     console.log(entry);
 
     var doc = new jsPDF('portrait', 'pt', 'a4');
-    var warehouse = [];
-    warehouse.push(["Forklift: ", entry.forkliftName + " (" + entry.forkliftType + ")"]);
-    warehouse.push(["Rego: ", entry.rego]);
-    warehouse.push(["Site:", entry.branch]);
-    warehouse.push(["Address:", entry.address]);
-    warehouse.push(["Dates:", this.dateView]);
-    warehouse.push(["Expected Check Count:", entry.expectedCheckCount]);
-    warehouse.push(["Times Checked: ", entry.timesChecked]);
 
-    autoTable(doc, { head: [], body: warehouse });
+    // autoTable(doc, { head: [[`${this.selectedChecklist.displayValue} VSR Pre-start Checklist`]] });
+
+    var vsr = [];
+    // vsr.push(["Checklist:", `${this.selectedChecklist.displayValue} VSR Pre-start Checklist`]);
+    vsr.push(["Date Generated:", `${(new Date()).toLocaleString("en-AU")}`]);
+    vsr.push(["SLOC:", entry.vehicle]);
+    vsr.push(["Dates:", this.dateView]);
+    vsr.push(["Expected Check Count:", entry.expectedCheckCount]);
+    vsr.push(["Times Checked: ", entry.timesChecked]);
+
+    autoTable(doc, { head: [[`${this.selectedChecklist.displayValue} VSR Pre-start Checklist`, '']], body: vsr });
+
+    var criticalItems = [];
+    var checklist = [];
+    var extras = [];
 
     for (var item of entry.data) {
       // var details = [];
       // details.push(["Date:", item.date]);
+
+      if (item.criticalInstances.length > 0) {
+        criticalItems.push(item.criticalInstances);
+      }
+
 
       var date = new Date(item.date);
 
@@ -583,13 +613,21 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
         rows.push(temp);
       }
 
-      autoTable(doc, {
+      checklist.push({
+        head: col,
+        body: rows,
+        didDrawPage: (data) => {
+          console.log(data);
+        }
+      });
+
+      /*autoTable(doc, {
         head: col,
         body: rows,
         didDrawPage: (data) => {
           // console.log(data);
         }
-      });
+      });*/
 
       var extra = [];
       var otherComment = ""
@@ -597,72 +635,40 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
       if (item.otherComment) {
         otherComment = item.otherComment;
       }
+      extra.push(["Odometer Reading:", item.odometerReading])
       extra.push(["Other Comments:", otherComment])
-      extra.push(["Employee:", item.employee])
+      extra.push(["Driver:", item.employee])
 
-      autoTable(doc, {
+      /*autoTable(doc, {
+        margin: { bottom: 10 },
+        head: [],
+        body: extra
+      });*/
+
+      extras.push({
         margin: { bottom: 10 },
         head: [],
         body: extra
       });
     }
 
-    var shortAddress = entry.address.split(',')[0];
+    if (criticalItems.length > 0) {
+      autoTable(doc, {
+        head: [["Date", "Items"]],
+        body: criticalItems
+      });
+    }
 
-    doc.save(`(Forklift) ${entry.branch}-${entry.address.split(',')[0]}-${entry.forkliftName} (${this.dateView})`);
-  }
+    for (var i = 0; i < checklist.length; i++) {
+      autoTable(doc, checklist[i]);
+      autoTable(doc, extras[i]);
+      if (i < checklist.length-1) doc.addPage();
+    }
 
-  exportToExcel() {
-    console.log(`exporting to excel file`);
-    console.log(this.dataSource.data);
-    var copy = JSON.parse(JSON.stringify(this.dataSource.data));
-    console.log(copy);
+    /*for (var check of extras) {
+      autoTable
+    }*/
 
-    var convertedData = [];
-
-    copy.sort((a, b) => {
-      return b.timesChecked - a.timesChecked;
-    });
-
-    var filteredData = copy.filter((current, index, result) => {
-      // console.log(current);
-      delete current.data;
-      return (current.compliance < 1 || current.frequencyCompliance < 1) && current.vehicle != "TEST";
-    });
-
-    filteredData.forEach((current) => {
-      delete current.data;
-      delete current.items;
-
-      current["State"] = current.state;
-      delete current.state;
-      current["Forklift Name"] = current.forkliftName;
-      delete current.forkliftName;
-      current["Forklift Type"] = current.forkliftType;
-      delete current.forkliftType;
-      current["Registration Number"] = current.rego;
-      delete current.rego;
-      current["Branch"] = current.branch;
-      delete current.branch;
-      current["Address"] = current.address;
-      delete current.address;
-      current["Expected Check Count"] = current.expectedCheckCount;
-      delete current.expectedCheckCount;
-      current["Times Checked"] = current.timesChecked;
-      delete current.timesChecked;
-      current["Times Compliant"] = current.timesCompliant;
-      delete current.timesCompliant;
-      current["Frequency Check Compliance"] = current.frequencyCompliance;
-      delete current.frequencyCompliance;
-      current["Vehicle Safety Compliance"] = current.compliance;
-      delete current.compliance;
-      current["Times Critical"] = current.timesCritical;
-      delete current.timesCritical;
-
-      // console.log(current);
-      convertedData.push(current);
-    });
-
-    this.excelService.exportAsExcelFile(convertedData, "Forklift Checklist Non-Compliance", this.dateView);
+    doc.save(`(VSR-${this.selectedChecklist.displayValue[0]}) ${entry.vehicle} (${this.dateView})`);
   }
 }

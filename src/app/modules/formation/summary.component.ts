@@ -10,10 +10,8 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ErrorStateMatcher } from '@angular/material/core';
 
-import { ChecklistService } from '../../services/checklist/checklist.service';
+import { FormationService } from '../../services/checklist/formation.service';
 import { AuthenticationService } from '../../services/auth/auth.service';
-import { ExcelService } from '../../services/checklist/excel.service';
-
 // import { UiService } from '../../services/overlay/ui.service'
 
 import { FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
@@ -26,18 +24,16 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   }
 }
 
-export interface ChecklistData {
-  timesChecked: number;
-  timesCompliant: number;
-  compliance: string;
-  timesCritical: number;
-  state: string;
-  vehicle: string;
-  address: string;
-  frequencyCompliance: number;
-  expectedCheckCount: number;
-  items: [string];
-  data: [object];
+export interface FormationData {
+  checklist: string;
+  equipmentLocation: string;
+  lineNumber: string;
+  mon: string;
+  tue: string;
+  wed: string;
+  thu: string;
+  fri: string;
+  details: [object];
 }
 
 export interface PeriodData {
@@ -47,32 +43,9 @@ export interface PeriodData {
 const LAST_YEARS = 2;
 
 const DAILY = (function() {
+  var options = [];
+
   var startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  var endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 1);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  var options = [{
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Today",
-    dateView: startDate.toLocaleDateString("en-AU")
-  }];
-
-  startDate.setDate(startDate.getDate() - 1);
-  endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 1);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  options.push({
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Yesterday",
-    dateView: startDate.toLocaleDateString("en-AU")
-  });
-
-  startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   var first = startDate.getDate() - startDate.getDay() + 1
   var last = first + 4;
@@ -81,7 +54,6 @@ const DAILY = (function() {
   var friday = new Date(startDate.valueOf());
   friday.setDate(friday.getDate() + 4);
   friday.setHours(23, 59, 59, 999);
-  // var friday = new Date(startDate.setDate(first + 4));
   
   options.push({
     value: monday.toISOString(),
@@ -99,17 +71,6 @@ const DAILY = (function() {
   var endMoment = moment(startMoment);
   endMoment.add(4, 'days');
 
-
-
-
-  // startDate.setDate(startDate.getDate() - 7);
-  // first = startDate.getDate() - startDate.getDay() + 1
-  // last = first + 4;
-  // var mondayMoment = moment(startDate);
-  // monday = new Date(startDate.setDate(first));
-  // friday = new Date(startDate.setDate(last));
-  // var fridayMoment = moment(startDate);
-
   options.push({
     value: startMoment.toISOString(),
     end: endMoment.toISOString(),
@@ -117,23 +78,10 @@ const DAILY = (function() {
     dateView: startMoment.format("DD/MM/YYYY") + " to " + endMoment.format("DD/MM/YYYY")
   });
 
-  /*startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - 7);
-  endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  options.push({
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Last 7 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")"
-  });*/
-
   startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   startDate.setDate(startDate.getDate() - 14);
-  endDate = new Date(startDate);
+  var endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 14);
   endDate.setMilliseconds(endDate.getMilliseconds() - 1);
 
@@ -164,6 +112,52 @@ const DAILY = (function() {
     displayValue: "Custom",
     dateView: ""
   });
+
+  return options;
+})();
+
+var currentWeek = {};
+
+var WEEKLY = (function() {
+  var options = [];
+  var start = new Date(Date.now()).getFullYear();
+  for (var i = LAST_YEARS; i >= 0; i--) {
+    var startYear = start - i;
+    var startDate = moment(new Date(startYear, 0, 1));
+
+    if (startDate.date() == 8) {
+      startDate = startDate.isoWeekday(-6);
+    }
+
+    var today = moment(new Date(startYear, 11, 31)).isoWeekday('Sunday');
+    while (startDate.isBefore(today)) {
+      let startDateWeek = startDate.isoWeekday('Monday').format('DD-MM-YYYY');
+      let startDateISO = startDate.toISOString();
+
+      let endDateWeek = startDate.isoWeekday('Sunday').format('DD-MM-YYYY');
+      let endDateISO = startDate.toISOString();
+
+      var end = new Date(endDateISO);
+      end.setDate(end.getDate() + 1);
+      end.setMilliseconds(end.getMilliseconds() - 1);
+
+      startDate.add(7, 'days');
+      var item = {
+        value: startDateISO,
+        end: end.toISOString(),
+        displayValue: startDateWeek + " to " + endDateWeek,
+        dateView: startDateWeek + " to " + endDateWeek
+      };
+
+      if (moment().isBetween(moment(startDateISO), moment(endDateISO), undefined, '[]')) { // 6/15 0:00:00 to 6/21   0:00:00
+        currentWeek = item;
+        console.log(currentWeek);
+      }
+      options.push(item);
+    }
+  }
+
+  // console.log(options);
 
   return options;
 })();
@@ -208,8 +202,8 @@ const MONTHLY = (function() {
 const CHECKLIST_OPTIONS = [
   {
     value: 'daily',
-    displayValue: 'Daily',
-    periodOptions: DAILY,
+    displayValue: 'Acid Filler',
+    periodOptions: WEEKLY,
     dateUnit: 1
   },
   {
@@ -218,21 +212,15 @@ const CHECKLIST_OPTIONS = [
     periodOptions: MONTHLY,
     dateUnit: 30
   },
-  /*{
-    value: 'maintenance',
-    displayValue: 'Maintenance',
-    periodOptions: MAINTENANCE,
-    dateUnit: 1
-  }*/
 ]
 
 
 @Component({
   selector: 'app-dashboard',
-  templateUrl: './vsr.checklist.component.html',
-  styleUrls: ['./checklist.component.css']
+  templateUrl: './summary.component.html',
+  styleUrls: ['./formation.component.css']
 })
-export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   dateView = "";
 
@@ -246,7 +234,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
   currentUserRole = 'all';
   currentUserState = 'all';
 
-  expectedCheckCount = 0;
+  // expectedCheckCount = 0;
   isLoading = false;
 
   options = new FormControl('valid', [
@@ -258,9 +246,9 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
   matcher = new MyErrorStateMatcher();
   matcherDaily = new MyErrorStateMatcher();
 
-  displayedColumns: string[] = ['state', 'vehicle', 'address', 'timesChecked', 'timesCompliant', 'frequencyCompliance', 'compliance', 'timesCritical', 'items'];
+  displayedColumns: string[] = ['weekNumber', 'equipmentLocation', 'lineNumber', 'mon', 'tue', 'wed', 'thu', 'fri', 'details'];
   displayedOptionColumns: string[] = ['period', 'close'];
-  dataSource = new MatTableDataSource<ChecklistData>([]);
+  dataSource = new MatTableDataSource<FormationData>([]);
 
   @ViewChild('paginator') paginator: MatPaginator;
   @ViewChild('paginator2') paginator2: MatPaginator;
@@ -268,17 +256,17 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public selectedOption = [CHECKLIST_OPTIONS[0].periodOptions[0]];
   selectedOptionDaily = DAILY[0];
+  // selectedOptionDaily = currentWeek;
   optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
   // optionSource = new MatTableDataSource<PeriodData>([]);
   // public selectedPeriod = CHECKLIST_OPTIONS[0].periodOptions[0];
-  public selectedState = '';
+  // public selectedState = '';
   public selectedChecklist = CHECKLIST_OPTIONS[0];
 
   // data array
   currentElementData = [];
 
   // filter options array 
-  states = ["ACT", "NSW", "NZ", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
   periods = CHECKLIST_OPTIONS[0].periodOptions;
   checklists = CHECKLIST_OPTIONS;
 
@@ -286,7 +274,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
   pageSizeOptions = [10, 20, 40, 100];
 
   // constructor(private checklistService: ChecklistService, private ui: UiService) { }
-  constructor(private excelService: ExcelService, private checklistService: ChecklistService, private authService: AuthenticationService, private router: Router) {
+  constructor(private formationService: FormationService, private authService: AuthenticationService, private router: Router) {
     this.navigationSubscription = this.router.events.subscribe((e: any) => {
       // If it is a NavigationEnd event re-initalise the component
       if (e instanceof NavigationEnd) {
@@ -306,7 +294,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
         this.currentUserState = currentUser.state;
-        this.selectedState = this.currentUserState;
+        // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
@@ -342,7 +330,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
         this.currentUserState = currentUser.state;
-        this.selectedState = this.currentUserState;
+        // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
@@ -358,7 +346,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log(data);
     if (!data.value) {
       console.log("Clear states filter");
-      this.dataSource = new MatTableDataSource<ChecklistData>(this.currentElementData);
+      this.dataSource = new MatTableDataSource<FormationData>(this.currentElementData);
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
       this.pageSizeOptions[3] = this.currentElementData.length;
@@ -366,7 +354,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     else {
       console.log(`States filter: ${data.value}`);
       var tempArray = this.currentElementData.filter(item => item.state == data.value)
-      this.dataSource = new MatTableDataSource<ChecklistData>(tempArray);
+      this.dataSource = new MatTableDataSource<FormationData>(tempArray);
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
       this.pageSizeOptions[3] = tempArray.length;
@@ -380,6 +368,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (data.value.value == "daily") { // daily checklist handler
       this.selectedOptionDaily = data.value.periodOptions[0];
+      tempArray.push(currentWeek);
     }
     else if (data.value.value == "monthly") { // monthly checklist handler
       tempArray.push(data.value.periodOptions[(LAST_YEARS * 12) + new Date().getMonth()]);
@@ -407,16 +396,17 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
   private updateDataSource(dataList) {
     console.log(dataList);
     this.currentElementData = dataList;
-    this.expectedCheckCount = dataList[0].expectedCheckCount;
+    // this.expectedCheckCount = dataList[0].expectedCheckCount;
     var tempArray = [];
-    if (!this.selectedState) {
+    tempArray = this.currentElementData;
+    /*if (!this.selectedState) {
       tempArray = this.currentElementData;
     }
     else {
       // this.dataSource = new MatTableDataSource
       tempArray = this.currentElementData.filter(item => item.state == this.selectedState)
-    }
-    this.dataSource = new MatTableDataSource<ChecklistData>(tempArray);
+    }*/
+    this.dataSource = new MatTableDataSource<FormationData>(tempArray);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.pageSizeOptions[3] = this.currentElementData.length;
@@ -440,81 +430,78 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     // handle what type of checklist is displayed and must update date range default value
     this.isLoading = true;
     var params = [];
-    
-    if (this.selectedChecklist.value == 'monthly') {
-      for (var option of this.selectedOption) {
-        params.push({ from: option.value, to: option.end });
-      }
+
+    if (this.selectedOptionDaily.value == 'Custom') {
+      var start = new Date(this.range.value.start.toISOString());
+      start.setHours(0, 0, 0, 0);
+      var end = new Date(this.range.value.end.toISOString());
+      end.setHours(23, 59, 59, 999);
+      params.push({
+        from: start.toISOString(),
+        to: end.toISOString()
+      });
     }
     else {
-      if (this.selectedOptionDaily.value == 'Custom') {
-        var start = new Date(this.range.value.start.toISOString());
-        start.setHours(0, 0, 0, 0);
-        var end = new Date(this.range.value.end.toISOString());
-        end.setHours(23, 59, 59, 999);
-        params.push({
-          from: start.toISOString(),
-          to: end.toISOString()
-        });
-      }
-      else
-        params.push({ from: this.selectedOptionDaily.value, to: this.selectedOptionDaily.end });
+      params.push({ from: this.selectedOptionDaily.value, to: this.selectedOptionDaily.end });
     }
 
     console.log(this.selectedChecklist.value);
 
-    this.checklistService.fetchData('vsr', this.selectedChecklist.value, params)
+    this.formationService.fetchData('acidFiller', params)
       .subscribe((data: any) => {
         console.log(data);
 
         var result = [];
-        var states = {};
 
         var arrayData = data.data;
-        for (var item of arrayData) {
-
-          if (!item.enable) {
-            console.log("skipping");
-            continue;
-          }
-          
-          if (!states[item.stateReg]) {
-            states[item.stateReg] = 1;
-          }
-          else {
-            states[item.stateReg]++;
-          }
+        console.log(arrayData);
+        for (var key in arrayData) {
+          console.log(key);
+          var item = arrayData[key];
 
           var row = {};
-          if (item.hasOwnProperty("stats")) {
-            row = item.stats;
-          }
-          else {
-            row = {
-              timesChecked: 0,
-              timesCompliant: 0,
-              compliance: 0,
-              timesCritical: 0
+          row["weekNumber"] = key;
+
+          for (var equipmentLocation in item) {
+            var row1 = { ...row };
+            console.log(equipmentLocation);
+            var line = item[equipmentLocation];
+            row1["equipmentLocation"] = equipmentLocation;
+
+            for (var lineNumber in line) {
+              var row2 = { ...row1 };
+              console.log(lineNumber);
+              row2["lineNumber"] = lineNumber;
+              row2["mon"] = this.identifyDayCheck(line[lineNumber][1]);
+              row2["tue"] = this.identifyDayCheck(line[lineNumber][2]);
+              row2["wed"] = this.identifyDayCheck(line[lineNumber][3]);
+              row2["thu"] = this.identifyDayCheck(line[lineNumber][4]);
+              row2["fri"] = this.identifyDayCheck(line[lineNumber][5]);
+              row2["details"] = line[lineNumber];
+              result.push(row2);
             }
           }
-          row["items"] = item.items;
-          row["expectedCheckCount"] = item.expectedCheckCount;
-          row["frequencyCompliance"] = row["timesChecked"] / item.expectedCheckCount;
-          row["vehicle"] = item.rego;
-          row["state"] = item.stateReg;
-          row["address"] = item.user;
-          row["data"] = item.data;
-          // row["driver"] = item.driver;
-
-          result.push(row);
         }
-
-        console.log(states);
-        console.log(Object.keys(states));
-        this.states = Object.keys(states).sort();
 
         this.updateDataSource(result);
       });
+  }
+
+  public identifyDayCheck(entry) {
+    if (Object.keys(entry).length == 0) {
+      // empty
+      return "";
+    }
+    else {
+      if (entry.failCount == 0) {
+        // all pass
+        return "pass";
+      }
+      else {
+        // failed
+        return "fail";
+      }
+    }
   }
 
   getDateView() {
@@ -574,6 +561,7 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateOptionSource(tempArray);
     this.fetchData();
   }
+
 
   generateData(entry) {
     console.log(entry);
@@ -672,53 +660,5 @@ export class VSRChecklistComponent implements OnInit, AfterViewInit, OnDestroy {
     }*/
 
     doc.save(`(VSR-${this.selectedChecklist.displayValue[0]}) ${entry.vehicle} (${this.dateView})`);
-  }
-
-  exportToExcel() {
-    console.log(`exporting to excel file`);
-    console.log(this.dataSource.data);
-    var copy = JSON.parse(JSON.stringify(this.dataSource.data));
-    console.log(copy);
-
-    var convertedData = [];
-
-    copy.sort((a, b) => {
-      return b.timesChecked - a.timesChecked;
-    });
-
-    var filteredData = copy.filter((current, index, result) => {
-      // console.log(current);
-      delete current.data;
-      return (current.compliance < 1 || current.frequencyCompliance < 1) && current.vehicle != "TEST";
-    });
-
-    filteredData.forEach((current) => {
-      delete current.data;
-      delete current.items;
-
-      current["State"] = current.state;
-      delete current.state;
-      current["SLOC"] = current.vehicle;
-      delete current.vehicle;
-      current["Description"] = current.address;
-      delete current.address;
-      current["Expected Check Count"] = current.expectedCheckCount;
-      delete current.expectedCheckCount;
-      current["Times Checked"] = current.timesChecked;
-      delete current.timesChecked;
-      current["Times Compliant"] = current.timesCompliant;
-      delete current.timesCompliant;
-      current["Frequency Check Compliance"] = current.frequencyCompliance;
-      delete current.frequencyCompliance;
-      current["Vehicle Safety Compliance"] = current.compliance;
-      delete current.compliance;
-      current["Times Critical"] = current.timesCritical;
-      delete current.timesCritical;
-
-      // console.log(current);
-      convertedData.push(current);
-    });
-
-    this.excelService.exportAsExcelFile(convertedData, `(${this.selectedChecklist.displayValue}) VSR Checklist Non-Compliance`, this.dateView);
   }
 }

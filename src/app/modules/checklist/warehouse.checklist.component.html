@@ -142,8 +142,24 @@
   </div>
 
   <div style="width: 100%; padding: 10px;">
-    <h2>{{ selectedChecklist.displayValue }} Warehouse Depot Checklist Compliance ({{ dateView }})</h2>
-    <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
+    <div fxLayout="row" fxLayoutAlign="space-between stretch">
+      <div>
+        <h2 style="margin-bottom: 8px!important;">{{ selectedChecklist.displayValue }} Warehouse Depot Checklist Compliance ({{ dateView }})</h2>
+        <!-- <h2>{{ selectedChecklist.displayValue }} Warehouse Depot Checklist Compliance ({{ dateView }})</h2> -->
+        <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p>
+      </div>
+      <div style="padding-bottom: 17.5px;" fxLayout="row" fxLayoutAlign="end center">
+        <!-- <button mat-button color="primary" [disabled]="isLoading" (click)="resetPeriodFilter()">Reset</button> -->
+
+        <button 
+          mat-raised-button 
+          color="primary" 
+          style="float: right;"
+          (click)="exportToExcel()">
+          Generate Non-Compliance
+        </button>
+      </div> 
+    </div>
     <mat-progress-bar mode="indeterminate" color="accent" *ngIf="isLoading"></mat-progress-bar>
     <table style="width: 100%;" mat-table matSort matSortActive="compliance" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
 

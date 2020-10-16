@@ -78,6 +78,26 @@ var TREE_DATA: FoodNode[] = [
         "role": ["storeAdmin"],
       }
     ]
+  },
+  {
+    "id": 5,
+    "name": "Formation Checklist",
+    "role": ["admin","formation"],
+    "route": "/dashboard/formation",
+    "children": [
+      {
+        "id": 51,
+        "name": "Formation Checklist Summary",
+        "route": "/dashboard/formation/summary",
+        "role": ["admin","formation"],
+      },
+      {
+        "id": 52,
+        "name": "Formation Checklist Details",
+        "route": "/dashboard/formation/details",
+        "role": ["admin", "formation"],
+      }
+    ]
   }
 ];
 

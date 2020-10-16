@@ -38,6 +38,8 @@ import { PersistenceService } from './services/persistence/persistence.service';
 
 import { VisitService } from './services/visit/visit.service';
 import { ChecklistService } from './services/checklist/checklist.service';
+import { ExcelService } from './services/checklist/excel.service';
+import { FormationService } from './services/checklist/formation.service';
 import { RoleGuardService } from './services/auth/role-guard.service';
 
 import { DownloadComponent } from './modules/download/download.component';
@@ -51,6 +53,10 @@ import { WarehouseChecklistComponent } from './modules/checklist/warehouse.check
 import { SettingsComponent } from './modules/settings/settings.component';
 import { UploadComponent } from './modules/settings/upload.component';
 import { LoginComponent } from './modules/login/login.component';
+
+
+import { SummaryComponent } from './modules/formation/summary.component';
+
 
 import { JwtInterceptor } from './modules/_helpers/jwt.interceptor';
 import { ErrorInterceptor } from './modules/_helpers/error.interceptor';
@@ -77,7 +83,8 @@ export function tokenGetter() {
     VSRChecklistComponent,
     SettingsComponent,
     UploadComponent,
-    LoginComponent
+    LoginComponent,
+    SummaryComponent
   ],
   imports: [
     BrowserModule,
@@ -110,6 +117,8 @@ export function tokenGetter() {
     RoleGuardService,
     VisitService,
     ChecklistService,
+    FormationService,
+    ExcelService,
     {
       provide: APP_INITIALIZER,
       useFactory: (persistenceService: PersistenceService) => () => persistenceService.connect(),

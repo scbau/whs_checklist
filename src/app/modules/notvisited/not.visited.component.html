@@ -63,10 +63,10 @@
 
 <div style="padding: 20px;" fxLayout="column" fxFlexLayout="center space-around">
   <h2>> 30 Days</h2>
-  <table mat-table matSort matSortActive="account" [dataSource]="dataSource3" class="mat-elevation-z8">
+  <table mat-table matSort matSortActive="lastVisitInDays" matSortDirection="asc" [dataSource]="dataSource3" class="mat-elevation-z8">
 
     <ng-container matColumnDef="position">
-      <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef> No. </th>
+      <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> No. </th>
       <td style="width: 10%!important;" mat-cell *matCellDef="let element"> {{element.position}} </td>
     </ng-container>
 
@@ -76,12 +76,12 @@
     </ng-container>
 
     <ng-container matColumnDef="lastVisit">
-      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef> Last Visit</th>
+      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Last Visit</th>
       <td style="width: 25%!important;" mat-cell *matCellDef="let element"> {{element.lastVisit}} </td>
     </ng-container>
 
     <ng-container matColumnDef="lastVisitInDays">
-      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef> Last Visit in Days </th>
+      <th style="width: 25%!important;" mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitInDays"> Last Visit in Days </th>
       <td style="width: 25%!important;" mat-cell *matCellDef="let element"> {{element.lastVisitInDays}} </td>
     </ng-container>
 
