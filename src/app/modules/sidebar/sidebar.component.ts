@@ -62,40 +62,40 @@ var TREE_DATA: FoodNode[] = [
   {
     "id": 4,
     "name": "Checklist Compliance",
-    "role": ["storeAdmin"],
+    "role": ["storeAdmin", "formationAdmin"],
     "route": "/dashboard/checksheet",
     "children": [
       {
         "id": 41,
         "name": "Forklift Pre-start Checklist",
         "route": "/dashboard/checksheet/forklift",
-        "role": ["storeAdmin"],
+        "role": ["storeAdmin", "formationAdmin"],
       },
       {
         "id": 42,
         "name": "Warehouse Depot Checklist",
         "route": "/dashboard/checksheet/warehouse",
-        "role": ["storeAdmin"],
+        "role": ["storeAdmin", "formationAdmin"],
       }
     ]
   },
   {
     "id": 5,
     "name": "Formation Checklist",
-    "role": ["admin","formation"],
+    "role": ["admin"],
     "route": "/dashboard/formation",
     "children": [
       {
         "id": 51,
         "name": "Formation Checklist Summary",
         "route": "/dashboard/formation/summary",
-        "role": ["admin","formation"],
+        "role": ["admin"],
       },
       {
         "id": 52,
         "name": "Formation Checklist Details",
         "route": "/dashboard/formation/details",
-        "role": ["admin", "formation"],
+        "role": ["admin"],
       }
     ]
   }

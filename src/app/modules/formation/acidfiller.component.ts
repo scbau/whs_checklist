@@ -51,14 +51,16 @@ const DAILY = (function() {
   endDate.setDate(endDate.getDate() + 1);
   endDate.setMilliseconds(endDate.getMilliseconds() - 1);
 
-  var options = [{
+  var options = [];
+
+  /*var options = [{
     value: startDate.toISOString(),
     end: endDate.toISOString(),
     displayValue: "Today",
     dateView: startDate.toLocaleDateString("en-AU")
-  }];
+  }];*/
 
-  startDate.setDate(startDate.getDate() - 1);
+  /*startDate.setDate(startDate.getDate() - 1);
   endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 1);
   endDate.setMilliseconds(endDate.getMilliseconds() - 1);
@@ -68,7 +70,7 @@ const DAILY = (function() {
     end: endDate.toISOString(),
     displayValue: "Yesterday",
     dateView: startDate.toLocaleDateString("en-AU")
-  });
+  });*/
 
   startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
@@ -79,7 +81,6 @@ const DAILY = (function() {
   var friday = new Date(startDate.valueOf());
   friday.setDate(friday.getDate() + 4);
   friday.setHours(23, 59, 59, 999);
-  // var friday = new Date(startDate.setDate(first + 4));
   
   options.push({
     value: monday.toISOString(),
@@ -97,17 +98,6 @@ const DAILY = (function() {
   var endMoment = moment(startMoment);
   endMoment.add(4, 'days');
 
-
-
-
-  // startDate.setDate(startDate.getDate() - 7);
-  // first = startDate.getDate() - startDate.getDay() + 1
-  // last = first + 4;
-  // var mondayMoment = moment(startDate);
-  // monday = new Date(startDate.setDate(first));
-  // friday = new Date(startDate.setDate(last));
-  // var fridayMoment = moment(startDate);
-
   options.push({
     value: startMoment.toISOString(),
     end: endMoment.toISOString(),
@@ -116,19 +106,6 @@ const DAILY = (function() {
   });
 
   /*startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - 7);
-  endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  options.push({
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Last 7 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")"
-  });*/
-
-  startDate = new Date(Date.now());
   startDate.setHours(0, 0, 0, 0);
   startDate.setDate(startDate.getDate() - 14);
   endDate = new Date(startDate);
@@ -154,7 +131,7 @@ const DAILY = (function() {
     end: endDate.toISOString(),
     displayValue: "Last 30 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")",
     dateView: startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU")
-  });
+  });*/
 
   options.push({
     value: "Custom",
@@ -166,9 +143,7 @@ const DAILY = (function() {
   return options;
 })();
 
-const MAINTENANCE = DAILY;
-
-const MONTHLY = (function() {
+/*const MONTHLY = (function() {
   var startYear = new Date(Date.now()).getFullYear();
 
   var startDate = new Date(startYear - LAST_YEARS, 0, 1);
@@ -201,27 +176,29 @@ const MONTHLY = (function() {
 
   console.log("MONTHLY", options);
   return options;
-})();
+})();*/
 
 const CHECKLIST_OPTIONS = [
   {
-    value: 'daily',
-    displayValue: 'Daily',
+    value: 'acidFiller',
+    displayValue: 'Acid Filler',
     periodOptions: DAILY,
-    dateUnit: 1
   },
   {
-    value: 'monthly',
-    displayValue: 'Monthly',
-    periodOptions: MONTHLY,
-    dateUnit: 30
+    value: 'charging',
+    displayValue: 'Charging',
+    periodOptions: DAILY,
   },
-  /*{
-    value: 'maintenance',
-    displayValue: 'Maintenance',
-    periodOptions: MAINTENANCE,
-    dateUnit: 1
-  }*/
+  {
+    value: 'hrdBrusher',
+    displayValue: 'HRD Brusher',
+    periodOptions: DAILY,
+  },
+  {
+    value: 'unloader',
+    displayValue: 'Unloader',
+    periodOptions: DAILY,
+  },
 ]
 
 
@@ -242,7 +219,7 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
   navigationSubscription;
 
   currentUserRole = 'all';
-  currentUserState = 'all';
+  // currentUserState = 'all';
 
   expectedCheckCount = 0;
   isLoading = false;
@@ -269,7 +246,7 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
   optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
   // optionSource = new MatTableDataSource<PeriodData>([]);
   // public selectedPeriod = CHECKLIST_OPTIONS[0].periodOptions[0];
-  public selectedState = '';
+  // public selectedState = '';
   public selectedChecklist = CHECKLIST_OPTIONS[0];
 
   // data array
@@ -299,16 +276,16 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
     if (currentUser) {
       if (currentUser.role == 'admin') {
         this.currentUserRole = 'all';
-        this.currentUserState = 'all';
+        // this.currentUserState = 'all';
       }
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
-        this.currentUserState = currentUser.state;
-        this.selectedState = this.currentUserState;
+        // this.currentUserState = currentUser.state;
+        // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // TODO: find a way to limit selection to states of entity (see master excel sheet for list of states per entity)
       }
     }
@@ -335,16 +312,16 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
     if (currentUser) {
       if (currentUser.role == 'admin') {
         this.currentUserRole = 'all';
-        this.currentUserState = 'all';
+        // this.currentUserState = 'all';
       }
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
-        this.currentUserState = currentUser.state;
-        this.selectedState = this.currentUserState;
+        // this.currentUserState = currentUser.state;
+        // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // TODO: find a way to limit selection to states of entity (see master excel sheet for list of states per entity)
       }
     }
@@ -407,13 +384,12 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentElementData = dataList;
     this.expectedCheckCount = dataList[0].expectedCheckCount;
     var tempArray = [];
-    if (!this.selectedState) {
+    // if (!this.selectedState) {
       tempArray = this.currentElementData;
-    }
-    else {
-      // this.dataSource = new MatTableDataSource
-      tempArray = this.currentElementData.filter(item => item.state == this.selectedState)
-    }
+    // }
+    // else {
+    //   tempArray = this.currentElementData.filter(item => item.state == this.selectedState)
+    // }
     this.dataSource = new MatTableDataSource<ChecklistData>(tempArray);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
@@ -502,7 +478,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
           row["state"] = item.stateReg;
           row["address"] = item.user;
           row["data"] = item.data;
-          // row["driver"] = item.driver;
 
           result.push(row);
         }
@@ -523,8 +498,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
         var end = this.range.value.end ? this.range.value.end.toLocaleDateString() : ""
 
         return start + " - " + end;
-
-        // return this.range.value.start +" to "+ this.range.value.end;
       }
       return this.selectedOptionDaily.dateView;
     }
@@ -535,7 +508,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
           items.push(option.dateView);
         }
 
-        // if (item)
         return items[0] + ` (+${items.length - 1} ${items.length === 2 ? 'other' : 'others'})`;
       }
       else
@@ -558,16 +530,15 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     var data = this.selectedChecklist, tempArray = [];
 
-    if (data.value == "daily") { // daily checklist handler
+    // if (data.value == "daily") { // daily checklist handler
       this.selectedOptionDaily = DAILY[0];
-    }
-    else if (data.value == "monthly") { // monthly checklist handler
+    // }
+    /*else if (data.value == "monthly") { // monthly checklist handler
       tempArray.push(data.periodOptions[(LAST_YEARS * 12) + new Date().getMonth()]);
-    }
-    else if (data.value == "maintenance") { // biannually checklist handler
-      // tempArray.push(data.periodOptions[data.periodOptions.length - 1]);
+    }*/
+    /*else if (data.value == "maintenance") { // biannually checklist handler
       this.selectedOptionDaily = MAINTENANCE[0];
-    }
+    }*/
 
     this.updateOptionSource(tempArray);
     this.fetchData();
@@ -577,11 +548,8 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log(entry);
 
     var doc = new jsPDF('portrait', 'pt', 'a4');
-
-    // autoTable(doc, { head: [[`${this.selectedChecklist.displayValue} VSR Pre-start Checklist`]] });
-
     var vsr = [];
-    // vsr.push(["Checklist:", `${this.selectedChecklist.displayValue} VSR Pre-start Checklist`]);
+
     vsr.push(["Date Generated:", `${(new Date()).toLocaleString("en-AU")}`]);
     vsr.push(["SLOC:", entry.vehicle]);
     vsr.push(["Dates:", this.dateView]);
@@ -595,8 +563,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
     var extras = [];
 
     for (var item of entry.data) {
-      // var details = [];
-      // details.push(["Date:", item.date]);
 
       if (item.criticalInstances.length > 0) {
         criticalItems.push(item.criticalInstances);
@@ -621,14 +587,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
 
-      /*autoTable(doc, {
-        head: col,
-        body: rows,
-        didDrawPage: (data) => {
-          // console.log(data);
-        }
-      });*/
-
       var extra = [];
       var otherComment = ""
 
@@ -638,12 +596,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
       extra.push(["Odometer Reading:", item.odometerReading])
       extra.push(["Other Comments:", otherComment])
       extra.push(["Driver:", item.employee])
-
-      /*autoTable(doc, {
-        margin: { bottom: 10 },
-        head: [],
-        body: extra
-      });*/
 
       extras.push({
         margin: { bottom: 10 },
@@ -664,10 +616,6 @@ export class AcidFillerComponent implements OnInit, AfterViewInit, OnDestroy {
       autoTable(doc, extras[i]);
       if (i < checklist.length-1) doc.addPage();
     }
-
-    /*for (var check of extras) {
-      autoTable
-    }*/
 
     doc.save(`(VSR-${this.selectedChecklist.displayValue[0]}) ${entry.vehicle} (${this.dateView})`);
   }

@@ -36,11 +36,10 @@
         </mat-list-item>
       </mat-list> -->
 
-      <mat-form-field *ngIf="selectedChecklist.value != 'monthly'">
+      <mat-form-field>
         <mat-label>Date Range</mat-label>
         <mat-select 
           [formControl]="optionsDaily" 
-          (selectionChange)="filterOptionList($event)" 
           [(ngModel)]="selectedOptionDaily" 
           [errorStateMatcher]="matcherDaily">
           <!-- <mat-option>
@@ -53,47 +52,6 @@
         </mat-select>
         <!-- <mat-hint>Errors appear instantly!</mat-hint> -->
         <mat-error *ngIf="optionsDaily.hasError('required')">Must select a date range to display.</mat-error>
-      </mat-form-field>
-
-
-      <mat-form-field *ngIf="selectedChecklist.value == 'daily' && selectedOptionDaily.value == 'Custom'">
-        <mat-label>Enter a date range</mat-label>
-        <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
-          <input matStartDate formControlName="start" placeholder="Start date">
-          <input matEndDate formControlName="end" placeholder="End date">
-        </mat-date-range-input>
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-date-range-picker #picker></mat-date-range-picker>
-
-        <mat-error *ngIf="range.controls.start.hasError('matStartDateInvalid')">Invalid start date</mat-error>
-        <mat-error *ngIf="range.controls.end.hasError('matEndDateInvalid')">Invalid end date</mat-error>
-      </mat-form-field>
-
-
-      <mat-form-field *ngIf="selectedChecklist.value == 'monthly'">
-        <mat-label>Date Range</mat-label>
-        <mat-select 
-          [formControl]="options" 
-          (selectionChange)="filterOptionList($event)" 
-          [(ngModel)]="selectedOption" 
-          [errorStateMatcher]="matcher"
-          multiple>
-          <mat-select-trigger>
-            {{options.value ? options.value[0]?.displayValue : ''}}
-            <span *ngIf="options.value?.length > 1">
-              (+{{options.value.length - 1}} {{options.value?.length === 2 ? 'other' : 'others'}})
-            </span>
-          </mat-select-trigger>
-          <!-- <mat-option>
-            None
-          </mat-option> -->
-          <mat-option *ngFor="let period of periods" [value]="period">
-          <!-- <mat-option *ngFor="let period of periods" [value]="period" [disabled]="options.value?.length == 1 && options.value?.includes(period)"> -->
-            {{ period.displayValue }}
-          </mat-option>
-        </mat-select>
-        <!-- <mat-hint>Errors appear instantly!</mat-hint> -->
-        <mat-error *ngIf="options.hasError('required')">Must select a date range to display.</mat-error>
       </mat-form-field>
 
       <!-- <mat-form-field> -->
@@ -110,44 +68,24 @@
         </button>
       </div>
       <!-- </mat-form-field> -->
-
-      <table *ngIf="selectedChecklist.value == 'monthly'" mat-table [dataSource]="optionSource" class="mat-elevation-z8" style="width: 100%;">
-
-        <ng-container matColumnDef="period">
-          <th style="width: 90%!important;" mat-header-cell *matHeaderCellDef> Period </th>
-          <td style="width: 90%!important;" mat-cell *matCellDef="let element"> {{element.displayValue}} </td>
-        </ng-container>
-
-        <ng-container matColumnDef="close">
-          <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef>  </th>
-          <td style="width: 10%!important;" mat-cell *matCellDef="let element">
-            <button mat-icon-button (click)="removeOption(element)" type="button">
-              <mat-icon>close</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <!-- <tr mat-header-row *matHeaderRowDef="displayedOptionColumns; sticky: true"></tr> -->
-        <tr mat-row *matRowDef="let row; columns: displayedOptionColumns;"></tr>
-      </table>
-      <mat-paginator *ngIf="selectedChecklist.value == 'monthly'" class="mat-elevation-z8" #paginator2 [pageSizeOptions]="[5, 10, 15]"></mat-paginator>
     </div>
     
   </div>
 
   <div style="width: 100%; padding: 10px;">
-    <h2 style="margin-bottom: 8px!important;">Acid Filler Checklist Summary ({{ dateView }})</h2>
+    <h2 style="margin-bottom: 8px!important;">{{ selectedChecklist.displayValue }} Checklist Summary ({{ dateView }})</h2>
     <!-- <p *ngIf="expectedCheckCount">(Expected times checked: {{ expectedCheckCount }})</p> -->
     <mat-progress-bar mode="indeterminate" color="accent" *ngIf="isLoading"></mat-progress-bar>
-    <table style="width: 100%;" mat-table matSort matSortActive="weekNumber" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
+    <table style="width: 100%;" mat-table matSort matSortActive="equipmentLocation" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8">
+    <!-- <table style="width: 100%;" mat-table matSort matSortActive="weekNumber" matSortDirection="desc" [dataSource]="dataSource" class="mat-elevation-z8"> -->
 
-      <ng-container matColumnDef="weekNumber">
-        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header="weekNumber"> Week Number </th>
+      <!-- <ng-container matColumnDef="weekNumber">
+        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Week Number </th>
         <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.weekNumber}} </td>
-      </ng-container>
+      </ng-container> -->
 
       <ng-container matColumnDef="equipmentLocation">
-        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Equipment Location </th>
+        <th style="width: 15%!important;" mat-header-cell *matHeaderCellDef mat-sort-header="equipmentLocation"> Equipment Location </th>
         <td style="width: 15%!important;" mat-cell *matCellDef="let element"> {{element.equipmentLocation}} </td>
       </ng-container>
 
@@ -157,8 +95,8 @@
       </ng-container>
 
       <ng-container matColumnDef="mon">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Mon </th>
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+        <th style="width: 12%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Mon </th>
+        <td style="width: 12%!important;" mat-cell *matCellDef="let element"> 
         <!-- <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element">  -->
           <mat-icon color="primary" *ngIf="element.mon == 'pass'">check_circle</mat-icon> 
           <mat-icon color="accent" *ngIf="element.mon == 'fail'">cancel</mat-icon>
@@ -166,32 +104,32 @@
       </ng-container>
 
       <ng-container matColumnDef="tue">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Tue </th>
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+        <th style="width: 12%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Tue </th>
+        <td style="width: 12%!important;" mat-cell *matCellDef="let element"> 
           <mat-icon color="primary" *ngIf="element.tue == 'pass'">check_circle</mat-icon> 
           <mat-icon color="accent" *ngIf="element.tue == 'fail'">cancel</mat-icon>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="wed">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Wed </th>
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element"> 
+        <th style="width: 12%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Wed </th>
+        <td style="width: 12%!important;" mat-cell *matCellDef="let element"> 
           <mat-icon color="primary" *ngIf="element.wed == 'pass'">check_circle</mat-icon> 
           <mat-icon color="accent" *ngIf="element.wed == 'fail'">cancel</mat-icon>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="thu">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Thu </th>
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+        <th style="width: 12%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Thu </th>
+        <td style="width: 12%!important;" mat-cell *matCellDef="let element">
           <mat-icon color="primary" *ngIf="element.thu == 'pass'">check_circle</mat-icon> 
           <mat-icon color="accent" *ngIf="element.thu == 'fail'">cancel</mat-icon>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="fri">
-        <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Fri </th>
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+        <th style="width: 12%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Fri </th>
+        <td style="width: 12%!important;" mat-cell *matCellDef="let element">
           <mat-icon color="primary" *ngIf="element.fri == 'pass'">check_circle</mat-icon> 
           <mat-icon color="accent" *ngIf="element.fri == 'fail'">cancel</mat-icon>
         </td>
@@ -200,7 +138,7 @@
       <ng-container matColumnDef="details">
         <th style="width: 10%!important;" mat-header-cell *matHeaderCellDef mat-sort-header> Details </th>
         <!-- <td style="width: 10%!important; padding-left: 20px;" mat-cell *matCellDef="let element"> <a href="{{generateData()}}" *ngIf="element.items.length>0">link here</a> </td> -->
-        <td style="width: 10%!important;" mat-cell *matCellDef="let element">
+        <td style="width: 10%!important;" mat-cell *matCellDef="let element" >
             <!-- mat-icon-button  -->
           <button 
             mat-button

@@ -42,81 +42,12 @@ export interface PeriodData {
 
 const LAST_YEARS = 2;
 
-const DAILY = (function() {
-  var options = [];
-
-  var startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  var first = startDate.getDate() - startDate.getDay() + 1
-  var last = first + 4;
-  var monday = new Date(startDate.setDate(first));
-
-  var friday = new Date(startDate.valueOf());
-  friday.setDate(friday.getDate() + 4);
-  friday.setHours(23, 59, 59, 999);
-  
-  options.push({
-    value: monday.toISOString(),
-    end: friday.toISOString(),
-    displayValue: "This week (" + monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU") + ")",
-    dateView: monday.toLocaleDateString("en-AU") + " to " + friday.toLocaleDateString("en-AU")
-  });
-
-  startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  var startMoment = moment(startDate);
-  startMoment.add(-7, 'days');
-  startMoment.add(-1 * (startDate.getDay() - 1), 'days');
-
-  var endMoment = moment(startMoment);
-  endMoment.add(4, 'days');
-
-  options.push({
-    value: startMoment.toISOString(),
-    end: endMoment.toISOString(),
-    displayValue: "Last week (" + startMoment.format("DD/MM/YYYY") + " to " + endMoment.format("DD/MM/YYYY") + ")",
-    dateView: startMoment.format("DD/MM/YYYY") + " to " + endMoment.format("DD/MM/YYYY")
-  });
-
-  startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - 14);
-  var endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 14);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  options.push({
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Last 14 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")",
-    dateView: startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU")
-  });
-
-  startDate = new Date(Date.now());
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - 30);
-  endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 30);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  options.push({
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: "Last 30 days (" + startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU") + ")",
-    dateView: startDate.toLocaleDateString("en-AU") + " to " + endDate.toLocaleDateString("en-AU")
-  });
-
-  options.push({
-    value: "Custom",
-    end: "",
-    displayValue: "Custom",
-    dateView: ""
-  });
-
-  return options;
-})();
-
-var currentWeek = {};
+var currentWeek = {
+  value: "",
+  end: "",
+  displayValue: "",
+  dateView: ""
+};
 
 var WEEKLY = (function() {
   var options = [];
@@ -162,55 +93,26 @@ var WEEKLY = (function() {
   return options;
 })();
 
-const MAINTENANCE = DAILY;
-
-const MONTHLY = (function() {
-  var startYear = new Date(Date.now()).getFullYear();
-
-  var startDate = new Date(startYear - LAST_YEARS, 0, 1);
-  startDate.setHours(0, 0, 0, 0);
-
-  var endDate = new Date(startDate);
-  endDate.setMonth(endDate.getMonth() + 1);
-  endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-  var options = [{
-    value: startDate.toISOString(),
-    end: endDate.toISOString(),
-    displayValue: (startDate.getMonth() + 1) + "-" + startDate.getFullYear(),
-    dateView: (startDate.getMonth() + 1) + "-" + startDate.getFullYear()
-  }];
-
-  while (options.length < (12 * (LAST_YEARS + 1))) {
-    startDate.setMonth(startDate.getMonth() + 1);
-    endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + 1);
-    endDate.setMilliseconds(endDate.getMilliseconds() - 1);
-
-    options.push({
-      value: startDate.toISOString(),
-      end: endDate.toISOString(),
-      displayValue: (startDate.getMonth() + 1) + "-" + startDate.getFullYear(),
-      dateView: (startDate.getMonth() + 1) + "-" + startDate.getFullYear()
-    });
-  }
-
-  console.log("MONTHLY", options);
-  return options;
-})();
-
 const CHECKLIST_OPTIONS = [
   {
-    value: 'daily',
+    value: 'acidFiller',
     displayValue: 'Acid Filler',
     periodOptions: WEEKLY,
-    dateUnit: 1
   },
   {
-    value: 'monthly',
-    displayValue: 'Monthly',
-    periodOptions: MONTHLY,
-    dateUnit: 30
+    value: 'charging',
+    displayValue: 'Charging',
+    periodOptions: WEEKLY,
+  },
+  {
+    value: 'hrdbrusher',
+    displayValue: 'HRD Brusher',
+    periodOptions: WEEKLY,
+  },
+  {
+    value: 'unloader',
+    displayValue: 'Unloader',
+    periodOptions: WEEKLY,
   },
 ]
 
@@ -232,7 +134,7 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
   navigationSubscription;
 
   currentUserRole = 'all';
-  currentUserState = 'all';
+  // currentUserState = 'all';
 
   // expectedCheckCount = 0;
   isLoading = false;
@@ -246,7 +148,7 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
   matcher = new MyErrorStateMatcher();
   matcherDaily = new MyErrorStateMatcher();
 
-  displayedColumns: string[] = ['weekNumber', 'equipmentLocation', 'lineNumber', 'mon', 'tue', 'wed', 'thu', 'fri', 'details'];
+  displayedColumns: string[] = [/*'weekNumber', */'equipmentLocation', 'lineNumber', 'mon', 'tue', 'wed', 'thu', 'fri', 'details'];
   displayedOptionColumns: string[] = ['period', 'close'];
   dataSource = new MatTableDataSource<FormationData>([]);
 
@@ -254,13 +156,11 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('paginator2') paginator2: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
-  public selectedOption = [CHECKLIST_OPTIONS[0].periodOptions[0]];
-  selectedOptionDaily = DAILY[0];
-  // selectedOptionDaily = currentWeek;
-  optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
-  // optionSource = new MatTableDataSource<PeriodData>([]);
-  // public selectedPeriod = CHECKLIST_OPTIONS[0].periodOptions[0];
-  // public selectedState = '';
+  // public selectedOption = [currentWeek];
+  // public selectedOption = [CHECKLIST_OPTIONS[0].periodOptions[0]];
+  // selectedOptionDaily = DAILY[0];
+  selectedOptionDaily = currentWeek;
+  // optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
   public selectedChecklist = CHECKLIST_OPTIONS[0];
 
   // data array
@@ -289,16 +189,16 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (currentUser) {
       if (currentUser.role == 'admin') {
         this.currentUserRole = 'all';
-        this.currentUserState = 'all';
+        // this.currentUserState = 'all';
       }
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // TODO: find a way to limit selection to states of entity (see master excel sheet for list of states per entity)
       }
     }
@@ -325,40 +225,20 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
     if (currentUser) {
       if (currentUser.role == 'admin') {
         this.currentUserRole = 'all';
-        this.currentUserState = 'all';
+        // this.currentUserState = 'all';
       }
       else if (currentUser.role == 'stateAdmin') {
         this.currentUserRole = 'state';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // this.selectedState = this.currentUserState;
       }
       else if (currentUser.role == 'entityAdmin') {
         this.currentUserRole = 'entity';
-        this.currentUserState = currentUser.state;
+        // this.currentUserState = currentUser.state;
         // TODO: find a way to limit selection to states of entity (see master excel sheet for list of states per entity)
       }
     }
     // this.updateDataSource(this.currentElementData);
-  }
-
-  // filter state
-  filterState(data) {
-    console.log(data);
-    if (!data.value) {
-      console.log("Clear states filter");
-      this.dataSource = new MatTableDataSource<FormationData>(this.currentElementData);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-      this.pageSizeOptions[3] = this.currentElementData.length;
-    }
-    else {
-      console.log(`States filter: ${data.value}`);
-      var tempArray = this.currentElementData.filter(item => item.state == data.value)
-      this.dataSource = new MatTableDataSource<FormationData>(tempArray);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-      this.pageSizeOptions[3] = tempArray.length;
-    }
   }
 
   // filter checklist type (daily, weekly, monthly, biannually)
@@ -366,46 +246,31 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.periods = data.value.periodOptions;
     var tempArray = [];
 
-    if (data.value.value == "daily") { // daily checklist handler
-      this.selectedOptionDaily = data.value.periodOptions[0];
-      tempArray.push(currentWeek);
-    }
-    else if (data.value.value == "monthly") { // monthly checklist handler
-      tempArray.push(data.value.periodOptions[(LAST_YEARS * 12) + new Date().getMonth()]);
-    }
-    else if (data.value.value == "maintenance") { // biannually checklist handler
-      this.selectedOptionDaily = data.value.periodOptions[0];
-    }
-    this.updateOptionSource(tempArray);
+    tempArray.push(currentWeek);
+
+    // this.updateOptionSource(tempArray);
     this.fetchData();
   }
 
   filterOptionList(data) {
-    this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
-    // this.optionSource = new MatTableDataSource<PeriodData>([]);
-    this.optionSource.paginator = this.paginator2;
+    console.log(data);
+    // this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
+    // this.optionSource.paginator = this.paginator2;
   }
 
-  private updateOptionSource(optionList) {
-    this.selectedOption = optionList;
-    this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
-    // this.optionSource = new MatTableDataSource<PeriodData>([]);
-    this.optionSource.paginator = this.paginator2;
-  }
+  // private updateOptionSource(optionList) {
+    // this.selectedOption = optionList;
+    // this.optionSource = new MatTableDataSource<PeriodData>(this.selectedOption);
+    // this.optionSource.paginator = this.paginator2;
+  // }
 
   private updateDataSource(dataList) {
     console.log(dataList);
     this.currentElementData = dataList;
-    // this.expectedCheckCount = dataList[0].expectedCheckCount;
+    
     var tempArray = [];
     tempArray = this.currentElementData;
-    /*if (!this.selectedState) {
-      tempArray = this.currentElementData;
-    }
-    else {
-      // this.dataSource = new MatTableDataSource
-      tempArray = this.currentElementData.filter(item => item.state == this.selectedState)
-    }*/
+    
     this.dataSource = new MatTableDataSource<FormationData>(tempArray);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
@@ -416,13 +281,13 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 1000);
   }
 
-  removeOption(data) {
-    var tempArray = this.selectedOption.filter(function(value, index, arr) {
-      return value.value != data.value;
-    });
+  // removeOption(data) {
+    // var tempArray = this.selectedOption.filter(function(value, index, arr) {
+      // return value.value != data.value;
+    // });
 
-    this.updateOptionSource(tempArray);
-  }
+    // this.updateOptionSource(tempArray);
+  // }
 
   // query data
   fetchData() {
@@ -447,7 +312,8 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     console.log(this.selectedChecklist.value);
 
-    this.formationService.fetchData('acidFiller', params)
+    // change this to selectedChecklist.value
+    this.formationService.fetchData(this.selectedChecklist.value, params)
       .subscribe((data: any) => {
         console.log(data);
 
@@ -455,7 +321,48 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
 
         var arrayData = data.data;
         console.log(arrayData);
-        for (var key in arrayData) {
+
+        for (var item of arrayData) {
+          if (!item.active) {
+            continue;
+          }
+
+          var row = {};
+          row["equipmentLocation"] = item.equipmentLocation;
+          row["lineNumber"] = item.line;
+
+          console.log(item);
+
+          if (item.hasOwnProperty("items")) {
+
+            // console.log()
+
+            var row1 = { ...row };
+            var items = item.items
+            // row["weekNumber"] = items.weekNumber;
+            for (var key in items) {
+              console.log(items[key]);
+              // row1["weekNumber"] = key;
+              row1["details"] = items[key];
+
+              // var row2 = { ...row1 };
+              for (var day in items[key]) {
+                row1[this.convertNumberToDay(day)] = this.identifyDayCheck(items[key][day]);
+              }
+
+              result.push(row1);
+            }
+          }
+          else {
+            // row = {};
+            result.push(row);
+          }
+
+        }
+
+        // displayedColumns: string[] = ['weekNumber', 'equipmentLocation', 'lineNumber', 'mon', 'tue', 'wed', 'thu', 'fri', 'details'];
+
+        /*for (var key in arrayData) {
           console.log(key);
           var item = arrayData[key];
 
@@ -481,10 +388,22 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
               result.push(row2);
             }
           }
-        }
+        }*/
 
         this.updateDataSource(result);
       });
+  }
+
+  private convertNumberToDay(number) {
+    var lookup = {
+      1: "mon",
+      2: "tue",
+      3: "wed",
+      4: "thu",
+      5: "fri"
+    };
+    console.log(lookup[number]);
+    return lookup[number];
   }
 
   public identifyDayCheck(entry) {
@@ -505,31 +424,20 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getDateView() {
-    console.log(this.selectedOption);
-    if (this.selectedChecklist.value == 'daily') {
-      if (this.selectedOptionDaily.value == 'Custom') {
-        var start = this.range.value.start ? this.range.value.start.toLocaleDateString() : ""
-        var end = this.range.value.end ? this.range.value.end.toLocaleDateString() : ""
-
-        return start + " - " + end;
-
-        // return this.range.value.start +" to "+ this.range.value.end;
+    console.log(this.selectedOptionDaily);
+    /*if (this.selectedOption.length > 1) {
+      var items = [];
+      for (var option of this.selectedOption) {
+        items.push(option.dateView);
       }
+
+      // if (item)
+      return items[0] + ` (+${items.length - 1} ${items.length === 2 ? 'other' : 'others'})`;
+    }*/
+    // else {
+      console.log("selectedOption.length <= 1")
       return this.selectedOptionDaily.dateView;
-    }
-    else {
-      if (this.selectedOption.length > 1) {
-        var items = [];
-        for (var option of this.selectedOption) {
-          items.push(option.dateView);
-        }
-
-        // if (item)
-        return items[0] + ` (+${items.length - 1} ${items.length === 2 ? 'other' : 'others'})`;
-      }
-      else
-        return this.selectedOption[0].dateView;
-    }
+    // }
   }
 
   isUpdateButtonDisabled() {
@@ -547,7 +455,10 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     var data = this.selectedChecklist, tempArray = [];
 
-    if (data.value == "daily") { // daily checklist handler
+    tempArray.push(currentWeek);
+    this.selectedOptionDaily = currentWeek;
+
+    /*if (data.value == "daily") { // daily checklist handler
       this.selectedOptionDaily = DAILY[0];
     }
     else if (data.value == "monthly") { // monthly checklist handler
@@ -556,9 +467,9 @@ export class SummaryComponent implements OnInit, AfterViewInit, OnDestroy {
     else if (data.value == "maintenance") { // biannually checklist handler
       // tempArray.push(data.periodOptions[data.periodOptions.length - 1]);
       this.selectedOptionDaily = MAINTENANCE[0];
-    }
+    }*/
 
-    this.updateOptionSource(tempArray);
+    // this.updateOptionSource(tempArray);
     this.fetchData();
   }
 

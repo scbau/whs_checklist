@@ -60,7 +60,7 @@ const routes: Routes = [
     runGuardsAndResolvers: 'always',
     data: {
       title: 'Forklift Pre-start Checklist',
-      expectedRole: ['admin', 'stateAdmin', 'entityAdmin', 'storeAdmin']
+      expectedRole: ['admin', 'stateAdmin', 'entityAdmin', 'storeAdmin', 'formationAdmin']
     }
     // outlet: 'sidebarContent'
   },
@@ -71,7 +71,7 @@ const routes: Routes = [
     runGuardsAndResolvers: 'always',
     data: {
       title: 'Warehouse Depot Checklist',
-      expectedRole: ['admin', 'stateAdmin', 'entityAdmin', 'storeAdmin']
+      expectedRole: ['admin', 'stateAdmin', 'entityAdmin', 'storeAdmin', 'formationAdmin']
     }
     // outlet: 'sidebarContent'
   },
@@ -82,7 +82,7 @@ const routes: Routes = [
     runGuardsAndResolvers: 'always',
     data: {
       title: 'Formation Checklist Summary',
-      expectedRole: ['admin', 'formation']
+      expectedRole: ['admin', 'formationAdmin']
     }
     // outlet: 'sidebarContent'
   },
