@@ -627,7 +627,7 @@ export class ForkliftChecklistComponent implements OnInit, AfterViewInit, OnDest
     var filteredData = copy.filter((current, index, result) => {
       // console.log(current);
       delete current.data;
-      return (current.compliance < 1 || current.frequencyCompliance < 1) && current.vehicle != "TEST";
+      return current.vehicle != "TEST";
     });
 
     filteredData.forEach((current) => {
